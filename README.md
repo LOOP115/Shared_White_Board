@@ -17,6 +17,8 @@ Shared whiteboards allow multiple users to draw simultaneously on a canvas. Ther
 
 
 
+
+
 ### Challenges
 
 * #### Dealing with concurrency
@@ -41,6 +43,8 @@ Shared whiteboards allow multiple users to draw simultaneously on a canvas. Ther
 
 
 
+
+
 ### Technology
 
 * Develop a white board that can be shared between multiple users over the network.
@@ -58,6 +62,8 @@ Shared whiteboards allow multiple users to draw simultaneously on a canvas. Ther
 
 
 
+
+
 ### Basic features
 
 * Multiple users can draw on a shared interactive canvas, created by a manager.
@@ -72,12 +78,16 @@ Shared whiteboards allow multiple users to draw simultaneously on a canvas. Ther
 
 
 
+
+
 ### Advanced features
 
 * Chat window (text-based): allow users to communicate with each other by typing a text
 * A "File" menu with new, open, save, saveAs and close should be provided (only the manager can control this)
 * Allow the manager to kick out a certain peer/user.
 * Allow corresponding exceptions should be managed.
+
+
 
 
 
@@ -89,6 +99,8 @@ Shared whiteboards allow multiple users to draw simultaneously on a canvas. Ther
 * Clients may connect and disconnect at any time. When a new client joins the system, the client should obtain the current state of the whiteboard so that the same objects are always displayed to every active client.
 * Only the manager of the whiteboard should be allowed to create a new whiteboard, open a previously saved one, save the current one, and close the application.
 * Users should be able to work on a drawing together in real time, without appreciable delays between making and observing edits.
+
+
 
 
 
@@ -104,6 +116,8 @@ Shared whiteboards allow multiple users to draw simultaneously on a canvas. Ther
 * All the peers will see the identical image of the whiteboard, as well as have the privilege of doing all the operations.
 * Online peers can choose to leave whenever they want. The manager can kick someone out at any time.
 * When the manager quits, the application will be terminated. All the peers will get a message notifying them.
+
+
 
 
 
@@ -133,6 +147,8 @@ Shared whiteboards allow multiple users to draw simultaneously on a canvas. Ther
     * You may need an event-based mechanism
   * How many threads do we need per peer?
     * At least one for drawing, one for messaging
+
+
 
 
 
