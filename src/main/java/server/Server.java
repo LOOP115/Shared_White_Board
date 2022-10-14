@@ -15,7 +15,7 @@ public class Server {
         String port = "3200";
 
         try {
-            IBoardServer server = new BoardServer();
+            IBoardMgr server = new BoardMgr();
             Registry registry = LocateRegistry.createRegistry(Integer.parseInt(port));
             registry.bind("WhiteBoard", server);
             JOptionPane.showMessageDialog(null, "Server is started!");

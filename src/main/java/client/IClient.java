@@ -7,10 +7,11 @@ package client;
 import canvas.ICanvasMsg;
 
 import java.io.IOException;
+import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.Set;
 
-public interface IClient {
+public interface IClient extends Remote {
 
     // Get client's username
     String getName() throws RemoteException;

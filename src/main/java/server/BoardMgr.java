@@ -6,7 +6,7 @@
 package server;
 
 import client.IClient;
-import client.Manager;
+import client.ClientMgr;
 import canvas.ICanvasMsg;
 
 import java.io.IOException;
@@ -15,14 +15,14 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Set;
 
-public class BoardServer extends UnicastRemoteObject implements IBoardServer, Serializable {
+public class BoardMgr extends UnicastRemoteObject implements IBoardMgr, Serializable {
 
-    private Manager manager;
+    private final ClientMgr manager;
 
     private IClient clientManager;
 
-    public BoardServer() throws RemoteException {
-        manager = new Manager(this);
+    public BoardMgr() throws RemoteException {
+        manager = new ClientMgr(this);
     }
 
     @Override
@@ -55,6 +55,11 @@ public class BoardServer extends UnicastRemoteObject implements IBoardServer, Se
             this.manager.addClient(client);
             syncClientList();
         }
+    }
+
+    @Override
+    public boolean isManager(String username) throws RemoteException {
+        return this.clientManager.getName().equals("(Host) " + username);
     }
 
     @Override
@@ -108,7 +113,7 @@ public class BoardServer extends UnicastRemoteObject implements IBoardServer, Se
     }
 
     @Override
-    public void broadcastCanvas(ICanvasMsg draw) throws RemoteException {
+    public void broadcastMsg(ICanvasMsg draw) throws RemoteException {
         for (IClient c: this.manager.getClientList()) {
             c.syncCanvas(draw);
         }

@@ -13,10 +13,13 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.Set;
 
-public interface IBoardServer extends Remote {
+public interface IBoardMgr extends Remote {
 
     // Record clients connected to the server
     void login(IClient client) throws RemoteException;
+
+    // Check if a client is manager based on username
+    boolean isManager(String username) throws RemoteException;
 
     // Get list of clients
     Set<IClient> getClients() throws RemoteException;
@@ -34,7 +37,7 @@ public interface IBoardServer extends Remote {
     void removeAllClients() throws IOException;
 
     // Broadcast updates of canvas to all clients
-    void broadcastCanvas(ICanvasMsg draw) throws RemoteException;
+    void broadcastMsg(ICanvasMsg draw) throws RemoteException;
 
     // Send the current canvas to newly joined clients
     byte[] sendCurrentCanvas() throws IOException;

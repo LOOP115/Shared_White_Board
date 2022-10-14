@@ -12,7 +12,7 @@ public interface ICanvasMsg extends Remote {
 
     String getState() throws RemoteException;
 
-    String getMsgType() throws RemoteException;
+    String getDrawType() throws RemoteException;
 
     Color getColor() throws RemoteException;
 
@@ -20,6 +20,6 @@ public interface ICanvasMsg extends Remote {
 
     String getText() throws RemoteException;
 
-    String getClientName() throws RemoteException;
+    String getUsername() throws RemoteException;
 
 }
