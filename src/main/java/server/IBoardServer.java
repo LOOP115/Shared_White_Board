@@ -1,25 +1,28 @@
 /**
- * Interface for server side.
+ * Interface for managing the white board.
  * Methods below can be called by clients remotely.
  */
 
 package server;
 
 import client.IClient;
-import message.IMessage;
+import canvas.ICanvasMsg;
 
 import java.io.IOException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.Set;
 
-public interface IServer extends Remote {
+public interface IBoardServer extends Remote {
 
     // Record clients connected to the server
     void login(IClient client) throws RemoteException;
 
     // Get list of clients
     Set<IClient> getClients() throws RemoteException;
+
+    // Sync client lists in all clients
+    void syncClientList() throws RemoteException;
 
     // Client quits the whiteboard
     void quitClient(String name) throws RemoteException;
@@ -30,8 +33,8 @@ public interface IServer extends Remote {
     // Remove all the clients
     void removeAllClients() throws IOException;
 
-    // Broadcast updates to all clients
-    void broadCastMsg(IMessage msg) throws RemoteException;
+    // Broadcast updates of canvas to all clients
+    void broadcastCanvas(ICanvasMsg draw) throws RemoteException;
 
     // Send the current canvas to newly joined clients
     byte[] sendCurrentCanvas() throws IOException;
@@ -42,7 +45,10 @@ public interface IServer extends Remote {
     // Clean the shared canvas
     void cleanCanvas() throws RemoteException;
 
+    // Send the new chat to the chat window
+    void broadcastChat(String chat) throws RemoteException;
+
     // Send the current chat history to newly joined clients
-    void sendCurrentChat() throws IOException;
+    byte[] sendChatHistory() throws IOException;
 
 }

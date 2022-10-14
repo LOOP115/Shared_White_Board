@@ -49,7 +49,7 @@ Shared whiteboards allow multiple users to draw simultaneously on a canvas. Ther
     * TCP or UDP
     * Message format and exchange protocol
       * can be XML-based or your own format
-      * Client can broadcast a message with updates to all other clients, other clients reply acknowledging the message.
+      * Client can broadcast a canvas with updates to all other clients, other clients reply acknowledging the canvas.
   * Java RMI
     * Remote Objects/Remote Interface
   * File or Database for Storage
@@ -103,7 +103,7 @@ Shared whiteboards allow multiple users to draw simultaneously on a canvas. Ther
 * An online peer list should be maintained and displayed.
 * All the peers will see the identical image of the whiteboard, as well as have the privilege of doing all the operations.
 * Online peers can choose to leave whenever they want. The manager can kick someone out at any time.
-* When the manager quits, the application will be terminated. All the peers will get a message notifying them.
+* When the manager quits, the application will be terminated. All the peers will get a canvas notifying them.
 
 
 
@@ -140,7 +140,7 @@ Shared whiteboards allow multiple users to draw simultaneously on a canvas. Ther
 
 * #### Report
 
-  * You should write a report that includes the system architecture, communication protocols and message formats, design diagrams (class and interaction), implementation details.
+  * You should write a report that includes the system architecture, communication protocols and canvas formats, design diagrams (class and interaction), implementation details.
   * Don’t document anything you haven’t implemented in the report. This is misconduct and will result in severe penalties.
 
 * #### You need to submit the following via LMS:
