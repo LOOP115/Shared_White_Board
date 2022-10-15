@@ -28,7 +28,7 @@ public class CanvasMsg extends UnicastRemoteObject implements ICanvasMsg {
     }
 
     @Override
-    public String getState() throws RemoteException {
+    public String getDrawState() throws RemoteException {
         return this.state;
     }
 

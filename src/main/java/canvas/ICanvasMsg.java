@@ -10,7 +10,7 @@ import java.rmi.RemoteException;
 
 public interface ICanvasMsg extends Remote {
 
-    String getState() throws RemoteException;
+    String getDrawState() throws RemoteException;
 
     String getDrawType() throws RemoteException;
 

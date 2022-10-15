@@ -32,6 +32,8 @@ public class BoardMgr extends UnicastRemoteObject implements IBoardMgr, Serializ
             client.setAsManager();
             clientManager = client;
             client.setName("(Host) " + client.getName());
+            this.manager.addClient(client);
+            syncClientList();
             return;
         }
 
@@ -48,7 +50,7 @@ public class BoardMgr extends UnicastRemoteObject implements IBoardMgr, Serializ
             try {
                 client.setAccess(false);
             } catch (Exception e) {
-                e.printStackTrace();
+                System.out.println("Unable to set access!");
             }
         } else {
             // Add client to the list

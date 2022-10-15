@@ -5,6 +5,7 @@
 package client;
 
 import canvas.ICanvasMsg;
+import server.IBoardMgr;
 
 import java.io.IOException;
 import java.rmi.Remote;
@@ -27,6 +28,9 @@ public interface IClient extends Remote {
 
     // Client requires access to the canvas
     boolean needAccess(String name) throws RemoteException;
+
+    // Get client's access status
+    boolean getAccess() throws RemoteException;
 
     // Change client's access
     void setAccess(boolean access) throws RemoteException;
@@ -55,4 +59,6 @@ public interface IClient extends Remote {
     // Get current chat history
     byte[] getChatHistory() throws IOException;
 
+    // Render UI
+    void renderUI(IBoardMgr boardMgr) throws RemoteException;
 }

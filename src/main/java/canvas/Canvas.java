@@ -25,22 +25,22 @@ import java.rmi.RemoteException;
 public class Canvas extends JComponent {
 
     private static final long serialVersionUID = 1L;
-    private static final int canvasWidth = 1280;
-    private static final int canvasHeight = 720;
+    private final String username;
+    private static final int canvasWidth = 700;
+    private static final int canvasHeight = 350;
     private String drawType;
     private Color color;
     private Point start, end;
     private String text;
-    private final String username;
     private final IBoardMgr boardMgr;
     private Graphics2D g2;
     private BufferedImage frame;
     private BufferedImage prevFrame;
 
 
-    public Canvas(String username, boolean isManager, IBoardMgr boardMgr) {
-        this.username = username;
+    public Canvas(IBoardMgr boardMgr, String username) {
         this.boardMgr = boardMgr;
+        this.username = username;
         this.color = Color.black;
         this.drawType = "free";
         this.text = "";
@@ -51,7 +51,7 @@ public class Canvas extends JComponent {
             @Override
             public void mousePressed(MouseEvent event) {
                 start = event.getPoint();
-                saveCanvas();
+                // saveCanvas();
                 try {
                     ICanvasMsg msg = new CanvasMsg("start", drawType, color, start, text, username);
                     boardMgr.broadcastMsg(msg);
@@ -90,6 +90,7 @@ public class Canvas extends JComponent {
                             start = end;
                             try {
                                 ICanvasMsg msg = new CanvasMsg("drawing", drawType, color, end, text, username);
+                                boardMgr.broadcastMsg(msg);
                             } catch (RemoteException e) {
                                 JOptionPane.showMessageDialog(null, "Unable to connect to server!");
                             }
@@ -109,6 +110,7 @@ public class Canvas extends JComponent {
                             g2.setStroke(new BasicStroke(10.0f));
                             try {
                                 ICanvasMsg msg = new CanvasMsg("drawing", drawType, color, end, text, username);
+                                boardMgr.broadcastMsg(msg);
                             } catch (RemoteException e) {
                                 JOptionPane.showMessageDialog(null, "Unable to connect to server!");
                             }
@@ -163,7 +165,7 @@ public class Canvas extends JComponent {
                         try {
                             g2.draw(shape);
                         } catch (NullPointerException e) {
-                            System.out.println("Error with draw");
+                            System.out.println("Drawing error!");
                         }
                     }
                     repaint();
@@ -191,6 +193,10 @@ public class Canvas extends JComponent {
 
     public Graphics2D getG2() {
         return g2;
+    }
+
+    public BufferedImage getFrame() {
+        return frame;
     }
 
     public void renderFrame(BufferedImage f) {
@@ -225,7 +231,7 @@ public class Canvas extends JComponent {
     }
 
     // Clean up the canvas
-    private void cleanCanvas() {
+    public void cleanCanvas() {
         g2.setPaint(Color.white);
         g2.fillRect(0, 0, canvasWidth, canvasHeight);
         g2.setPaint(color);
@@ -247,31 +253,31 @@ public class Canvas extends JComponent {
 
 /**************************************************Types of Drawings***************************************************/
     public void free() {
-        drawType = "free";
+        this.drawType = "free";
     }
 
     public void line() {
-        drawType = "line";
+        this.drawType = "line";
     }
 
     public void circle() {
-        drawType = "circle";
+        this.drawType = "circle";
     }
 
     public void triangle() {
-        drawType = "triangle";
+        this.drawType = "triangle";
     }
 
     public void rectangle() {
-        drawType = "rectangle";
+        this.drawType = "rectangle";
     }
 
     public void text() {
-        drawType = "text";
+        this.drawType = "text";
     }
 
     public void eraser() {
-        drawType = "eraser";
+        this.drawType = "eraser";
     }
 
     public Shape drawLine(Point start, Point end) {
