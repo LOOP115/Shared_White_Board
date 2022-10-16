@@ -28,8 +28,7 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Set;
 
-import static javax.swing.GroupLayout.Alignment.BASELINE;
-import static javax.swing.GroupLayout.Alignment.CENTER;
+import static javax.swing.GroupLayout.Alignment.*;
 
 public class Client extends UnicastRemoteObject implements IClient {
 
@@ -58,12 +57,13 @@ public class Client extends UnicastRemoteObject implements IClient {
     private JButton blackBt, whiteBt, grayBt, silverBt, maroonBt, redBt, purpleBt, fuchsiaBt;
     private JButton greenBt, limeBt, oliveBt, yellowBt, navyBt, blueBt, tealBt, aquaBt;
     private ArrayList<JButton> colorBts = new ArrayList<>();
-    private JTextArea colorBox = new JTextArea("Color in use");
-    private JTextArea colorUse = new JTextArea("");
+    private JButton colorUse = new JButton();
 
     // Draw buttons
     private JButton freeBt, lineBt, circleBt, triangleBt, rectangleBt, textBt, eraserBt;
     private ArrayList<JButton> drawBts = new ArrayList<>();
+    private final int drawBtWidth = 40;
+    private final int drawBtHeight = 40;
 
     // Function buttons
     private JButton newBt, openBt, saveBt, saveAsBt, closeBt, sendBt;
@@ -71,8 +71,8 @@ public class Client extends UnicastRemoteObject implements IClient {
 
     // Client list
     private DefaultListModel<String> clientList = new DefaultListModel<>();
-    private JList<String> clientJList = new JList<>(clientList);
-    private JScrollPane clientWindow = new JScrollPane(clientJList);
+    private JList<String> clientJList;
+    private JScrollPane clientWindow;
 
     // Chat window
     private DefaultListModel<String> chatHistory = new DefaultListModel<>();
@@ -82,7 +82,7 @@ public class Client extends UnicastRemoteObject implements IClient {
 
     public Client(IBoardMgr server, String username) throws RemoteException {
         this.server = server;
-        this.canvas = new Canvas(server, username);
+        this.username = username;
         this.hasAccess = true;
     }
 
@@ -126,10 +126,15 @@ public class Client extends UnicastRemoteObject implements IClient {
 
     @Override
     public void updateClientList(Set<IClient> clients) throws RemoteException {
-        this.clientList = new DefaultListModel<>();
+        this.clientList.removeAllElements();
         for (IClient c: clients) {
             this.clientList.addElement(c.getName());
         }
+    }
+
+    @Override
+    public Canvas getCanvas() throws RemoteException {
+        return this.canvas;
     }
 
     @Override
@@ -267,7 +272,7 @@ public class Client extends UnicastRemoteObject implements IClient {
         if (dialog.getFile() != null) {
             this.canvasPath = dialog.getDirectory();
             this.canvasName = dialog.getFile();
-            ImageIO.write(canvas.getFrame(), "png", new File(canvasPath + canvasName));
+            ImageIO.write(canvas.getFrame(), "png", new File(canvasPath + canvasName + ".png"));
         }
     }
 
@@ -374,7 +379,7 @@ public class Client extends UnicastRemoteObject implements IClient {
                         System.out.println("Error with saving the canvas!");
                     }
                 }
-            } else if (event.getSource() == openBt) {
+            } else if (event.getSource() == saveAsBt) {
                 if (isManager) {
                     try {
                         mgrSaveAs();
@@ -398,12 +403,21 @@ public class Client extends UnicastRemoteObject implements IClient {
         }
     }
 
+    // Resize the icon image
+    public ImageIcon resizeIcon(String path) {
+        ImageIcon icon = new ImageIcon(String.valueOf(Paths.get(path).toAbsolutePath()));
+        Image iconImg = icon.getImage();
+        Image resizeImg = iconImg.getScaledInstance(this.drawBtWidth, this.drawBtHeight, java.awt.Image.SCALE_SMOOTH);
+        return new ImageIcon(resizeImg);
+    }
+
 
     // Initialise and render the UI
     @Override
-    public void renderUI(IBoardMgr server) {
+    public void renderUI(IBoardMgr server) throws RemoteException {
         this.window = new JFrame("White Board");
         Container container = this.window.getContentPane();
+        canvas = new Canvas(server, username, isManager);
 
         // Configure color buttons
         blackBt = new JButton();
@@ -476,42 +490,41 @@ public class Client extends UnicastRemoteObject implements IClient {
             bt.addActionListener(actionListener);
         }
 
-        colorBox.setBackground(new Color(238,238,238));
         colorUse.setBackground(Color.black);
 
         // Configure drawing buttons
-        Icon icon;
-        icon = new ImageIcon(String.valueOf(Paths.get("src/icons/free.png").toAbsolutePath()));
+        ImageIcon icon;
+        icon = resizeIcon("src/icons/free.png");
         freeBt = new JButton(icon);
         freeBt.setToolTipText("Free-hand");
         this.drawBts.add(freeBt);
 
-        icon = new ImageIcon(String.valueOf(Paths.get("src/icons/line.png").toAbsolutePath()));
+        icon = resizeIcon("src/icons/line.png");
         lineBt = new JButton(icon);
         lineBt.setToolTipText("Line");
         this.drawBts.add(lineBt);
 
-        icon = new ImageIcon(String.valueOf(Paths.get("src/icons/circle.png").toAbsolutePath()));
+        icon = resizeIcon("src/icons/circle.png");
         circleBt = new JButton(icon);
         circleBt.setToolTipText("Circle");
         this.drawBts.add(circleBt);
 
-        icon = new ImageIcon(String.valueOf(Paths.get("src/icons/triangle.png").toAbsolutePath()));
+        icon = resizeIcon("src/icons/triangle.png");
         triangleBt = new JButton(icon);
         triangleBt.setToolTipText("Triangle");
         this.drawBts.add(triangleBt);
 
-        icon = new ImageIcon(String.valueOf(Paths.get("src/icons/rectangle.png").toAbsolutePath()));
+        icon = resizeIcon("src/icons/rectangle.png");
         rectangleBt = new JButton(icon);
         rectangleBt.setToolTipText("Rectangle");
         this.drawBts.add(rectangleBt);
 
-        icon = new ImageIcon(String.valueOf(Paths.get("src/icons/text.png").toAbsolutePath()));
+        icon = resizeIcon("src/icons/text.png");
         textBt = new JButton(icon);
         textBt.setToolTipText("Text");
         this.drawBts.add(textBt);
 
-        icon = new ImageIcon(String.valueOf(Paths.get("src/icons/eraser.png").toAbsolutePath()));
+        icon = resizeIcon("src/icons/eraser.png");
         eraserBt = new JButton(icon);
         eraserBt.setToolTipText("Eraser");
         this.drawBts.add(eraserBt);
@@ -550,6 +563,8 @@ public class Client extends UnicastRemoteObject implements IClient {
         }
 
         // Show all editors of the canvas.
+        clientJList = new JList<>(this.clientList);
+        clientWindow = new JScrollPane(clientJList);
         clientWindow.setMinimumSize(new Dimension(100, 290));
         if(isManager) {
             clientWindow.setMinimumSize(new Dimension(100, 150));
@@ -594,6 +609,7 @@ public class Client extends UnicastRemoteObject implements IClient {
         chatWindow = new JScrollPane(chat);
         chatWindow.setMinimumSize(new Dimension(100, 100));
         chatMsg = new JTextField();
+        chatWindow.setMinimumSize(new Dimension(100, 10));
         sendBt = new JButton("Send");
         sendBt.addMouseListener(new MouseAdapter() {
             @Override
@@ -651,34 +667,31 @@ public class Client extends UnicastRemoteObject implements IClient {
             }
         });
 
-        // Configure the UI window
-        window.setMinimumSize(new Dimension(windowWidth, windowHeight));
-        window.setLocationRelativeTo(null);
-        window.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        window.setVisible(true);
-
-
         // UI design
         GroupLayout layout = new GroupLayout(container);
         container.setLayout(layout);
         layout.setAutoCreateGaps(true);
         layout.setAutoCreateContainerGaps(true);
+        canvas.setBorder(border);
+        // canvas.setOpaque(true);
+
         // Horizontal layout
         layout.setHorizontalGroup(layout.createSequentialGroup()
-            .addGroup(layout.createParallelGroup(CENTER)
-                .addComponent(freeBt)
-                .addComponent(lineBt)
-                .addComponent(circleBt)
-                .addComponent(triangleBt)
-                .addComponent(rectangleBt)
-                .addComponent(textBt)
-                .addComponent(eraserBt)
-            ).addGroup(layout.createParallelGroup(CENTER)
-                .addComponent(canvas)
-                .addComponent(chatWindow).addGroup(layout.createSequentialGroup()
+            // Left
+            .addGroup(layout.createParallelGroup(LEADING)
+                .addGroup(layout.createSequentialGroup()
+                    .addComponent(newBt)
+                    .addComponent(openBt)
+                    .addComponent(saveBt)
+                    .addComponent(saveAsBt))
+                .addComponent(clientWindow)
+                .addComponent(chatWindow)
+                .addGroup(layout.createParallelGroup(CENTER)
                     .addComponent(chatMsg)
-                    .addComponent(sendBt)
-                ).addGroup(layout.createSequentialGroup()
+                    .addComponent(sendBt)))
+            // Right
+            .addGroup(layout.createParallelGroup(CENTER)
+                .addGroup(layout.createSequentialGroup()
                     .addComponent(blackBt)
                     .addComponent(grayBt)
                     .addComponent(maroonBt)
@@ -686,8 +699,8 @@ public class Client extends UnicastRemoteObject implements IClient {
                     .addComponent(greenBt)
                     .addComponent(oliveBt)
                     .addComponent(navyBt)
-                    .addComponent(tealBt)
-                ).addGroup(layout.createSequentialGroup()
+                    .addComponent(tealBt))
+                .addGroup(layout.createSequentialGroup()
                     .addComponent(whiteBt)
                     .addComponent(silverBt)
                     .addComponent(redBt)
@@ -695,21 +708,8 @@ public class Client extends UnicastRemoteObject implements IClient {
                     .addComponent(limeBt)
                     .addComponent(yellowBt)
                     .addComponent(blueBt)
-                    .addComponent(aquaBt)
-                )
-            ).addGroup(layout.createParallelGroup(CENTER)
-                .addComponent(newBt)
-                .addComponent(openBt)
-                .addComponent(saveBt)
-                .addComponent(saveAsBt)
-                .addComponent(clientWindow)
-                .addComponent(colorBox)
-                .addComponent(colorUse)
-            )
-        );
-        // Vertical layout
-        layout.setVerticalGroup(layout.createSequentialGroup()
-            .addGroup(layout.createParallelGroup(BASELINE)
+                    .addComponent(aquaBt))
+                .addComponent(canvas)
                 .addGroup(layout.createSequentialGroup()
                     .addComponent(freeBt)
                     .addComponent(lineBt)
@@ -718,49 +718,70 @@ public class Client extends UnicastRemoteObject implements IClient {
                     .addComponent(rectangleBt)
                     .addComponent(textBt)
                     .addComponent(eraserBt)
-                )
-                .addComponent(canvas).addGroup(layout.createSequentialGroup()
-                    .addComponent(newBt)
-                    .addComponent(openBt)
-                    .addComponent(saveBt)
-                    .addComponent(saveAsBt)
-                    .addComponent(clientWindow)
-                    .addComponent(colorBox)
-                    .addComponent(colorUse)
-                )
-            )
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(chatWindow)
-                .addGroup(layout.createParallelGroup()
-                    .addComponent(chatMsg)
-                    .addComponent(sendBt)
-                )
-            )
-            .addGroup(layout.createSequentialGroup().
-                addGroup(layout.createParallelGroup(BASELINE)
-                    .addComponent(blackBt)
-                    .addComponent(grayBt)
-                    .addComponent(maroonBt)
-                    .addComponent(purpleBt)
-                    .addComponent(greenBt)
-                    .addComponent(oliveBt)
-                    .addComponent(navyBt)
-                    .addComponent(tealBt)
-                )
-                .addGroup(layout.createParallelGroup(BASELINE)
-                    .addComponent(whiteBt)
-                    .addComponent(silverBt)
-                    .addComponent(redBt)
-                    .addComponent(fuchsiaBt)
-                    .addComponent(limeBt)
-                    .addComponent(yellowBt)
-                    .addComponent(blueBt)
-                    .addComponent(aquaBt)
-                )
-            )
-        );
+                    .addComponent(colorUse))));
+
+
+        // Vertical layout
+        layout.setVerticalGroup(layout.createSequentialGroup()
+            // Top
+            .addGroup(layout.createParallelGroup(BASELINE)
+                .addComponent(newBt)
+                .addComponent(openBt)
+                .addComponent(saveBt)
+                .addComponent(saveAsBt)
+                .addGroup(layout.createSequentialGroup()
+                    .addGroup(layout.createParallelGroup(BASELINE)
+                        .addComponent(blackBt)
+                        .addComponent(grayBt)
+                        .addComponent(maroonBt)
+                        .addComponent(purpleBt)
+                        .addComponent(greenBt)
+                        .addComponent(oliveBt)
+                        .addComponent(navyBt)
+                        .addComponent(tealBt))
+                    .addGroup(layout.createParallelGroup(BASELINE)
+                        .addComponent(whiteBt)
+                        .addComponent(silverBt)
+                        .addComponent(redBt)
+                        .addComponent(fuchsiaBt)
+                        .addComponent(limeBt)
+                        .addComponent(yellowBt)
+                        .addComponent(blueBt)
+                        .addComponent(aquaBt))))
+                .addGroup(layout.createParallelGroup(TRAILING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(clientWindow)
+                        .addComponent(chatWindow)
+                        .addGroup(layout.createSequentialGroup()
+                            .addComponent(chatMsg)
+                            .addComponent(sendBt)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(canvas)
+                        .addGroup(layout.createSequentialGroup()
+                            .addGroup(layout.createParallelGroup(BASELINE)
+                                .addComponent(freeBt)
+                                .addComponent(lineBt)
+                                .addComponent(circleBt)
+                                .addComponent(triangleBt)
+                                .addComponent(rectangleBt)
+                                .addComponent(textBt)
+                                .addComponent(eraserBt)
+                                .addComponent(colorUse))))));
+
+
         // Same button size
         layout.linkSize(SwingConstants.HORIZONTAL, newBt, openBt, saveBt, saveAsBt);
+
+        layout.linkSize(SwingConstants.HORIZONTAL, freeBt, lineBt, circleBt, triangleBt, rectangleBt, textBt, eraserBt, colorUse, sendBt);
+
+        layout.linkSize(SwingConstants.VERTICAL, freeBt, lineBt, circleBt, triangleBt, rectangleBt, textBt, eraserBt, colorUse, sendBt);
+
+        // Configure the UI window
+        window.setMinimumSize(new Dimension(windowWidth, windowHeight));
+        window.setLocationRelativeTo(null);
+        window.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        window.setVisible(true);
+
     }
 
 }

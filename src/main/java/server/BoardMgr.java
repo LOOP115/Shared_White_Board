@@ -61,7 +61,7 @@ public class BoardMgr extends UnicastRemoteObject implements IBoardMgr, Serializ
 
     @Override
     public boolean isManager(String username) throws RemoteException {
-        return this.clientManager.getName().equals("(Host) " + username);
+        return this.clientManager.getName().equals(username);
     }
 
     @Override

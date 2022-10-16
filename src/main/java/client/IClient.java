@@ -4,6 +4,7 @@
 
 package client;
 
+import canvas.Canvas;
 import canvas.ICanvasMsg;
 import server.IBoardMgr;
 
@@ -37,6 +38,9 @@ public interface IClient extends Remote {
 
     // Update the client list
     void updateClientList(Set<IClient> clientList) throws RemoteException;
+
+    // Get client's canvas
+    Canvas getCanvas() throws RemoteException;
 
     // Sync new updates on the canvas
     void syncCanvas(ICanvasMsg draw) throws RemoteException;

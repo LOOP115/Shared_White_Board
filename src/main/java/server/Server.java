@@ -18,7 +18,8 @@ public class Server {
             IBoardMgr server = new BoardMgr();
             Registry registry = LocateRegistry.createRegistry(Integer.parseInt(port));
             registry.bind("WhiteBoard", server);
-            JOptionPane.showMessageDialog(null, "Server is started!");
+            System.out.println("Server Running...");
+            // JOptionPane.showMessageDialog(null, "Server is started!");
         } catch (Exception e) {
             System.out.println("Error starting the server");
         }

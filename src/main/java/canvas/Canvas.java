@@ -26,8 +26,9 @@ public class Canvas extends JComponent {
 
     private static final long serialVersionUID = 1L;
     private final String username;
+    private final boolean isManager;
     private static final int canvasWidth = 700;
-    private static final int canvasHeight = 350;
+    private static final int canvasHeight = 450;
     private String drawType;
     private Color color;
     private Point start, end;
@@ -38,9 +39,10 @@ public class Canvas extends JComponent {
     private BufferedImage prevFrame;
 
 
-    public Canvas(IBoardMgr boardMgr, String username) {
+    public Canvas(IBoardMgr boardMgr, String username, boolean isManager) {
         this.boardMgr = boardMgr;
         this.username = username;
+        this.isManager = isManager;
         this.color = Color.black;
         this.drawType = "free";
         this.text = "";
@@ -51,7 +53,7 @@ public class Canvas extends JComponent {
             @Override
             public void mousePressed(MouseEvent event) {
                 start = event.getPoint();
-                // saveCanvas();
+                saveCanvas();
                 try {
                     ICanvasMsg msg = new CanvasMsg("start", drawType, color, start, text, username);
                     boardMgr.broadcastMsg(msg);
@@ -205,29 +207,33 @@ public class Canvas extends JComponent {
     }
 
     // Render the canvas for a newly joined client
-    public void renderCanvas(Graphics g) throws RemoteException {
-        // Render a blank for the first joined client (manager)
-        if (boardMgr.isManager(username)) {
-            frame = new BufferedImage(canvasWidth, canvasHeight, BufferedImage.TYPE_INT_RGB);
-            g2 = (Graphics2D) frame.getGraphics();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setPaint(this.color);
-            g2.setStroke(new BasicStroke(2.0f));
-            cleanCanvas();
-        } else {
-            // Render the current canvas to the newly joined client
-            try {
-                byte[] image = boardMgr.sendCurrentCanvas();
-                frame = ImageIO.read(new ByteArrayInputStream(image));
+    @Override
+    public void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        if (frame == null) {
+            // Render a blank for the first joined client (manager)
+            if (isManager) {
+                frame = new BufferedImage(canvasWidth, canvasHeight, BufferedImage.TYPE_INT_RGB);
                 g2 = (Graphics2D) frame.getGraphics();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setPaint(this.color);
                 g2.setStroke(new BasicStroke(2.0f));
-            } catch (Exception e) {
-                System.out.println("Render error");
+                cleanCanvas();
+            } else {
+                // Render the current canvas to the newly joined client
+                try {
+                    byte[] image = boardMgr.sendCurrentCanvas();
+                    frame = ImageIO.read(new ByteArrayInputStream(image));
+                    g2 = (Graphics2D) frame.getGraphics();
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2.setPaint(this.color);
+                    g2.setStroke(new BasicStroke(2.0f));
+                } catch (Exception e) {
+                    System.out.println("Render error");
+                }
             }
         }
-        renderFrame(frame);
+        g.drawImage(frame, 0, 0, null);
     }
 
     // Clean up the canvas
