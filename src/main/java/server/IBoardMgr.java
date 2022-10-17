@@ -18,8 +18,8 @@ public interface IBoardMgr extends Remote {
     // Record clients connected to the server
     void login(IClient client) throws RemoteException;
 
-    // Check if a client is manager based on username
-    boolean isManager(String username) throws RemoteException;
+    // Check if the name is duplicated
+    boolean validUsername(String username) throws RemoteException;
 
     // Get list of clients
     Set<IClient> getClients() throws RemoteException;
@@ -52,6 +52,6 @@ public interface IBoardMgr extends Remote {
     void broadcastChat(String chat) throws RemoteException;
 
     // Send the current chat history to newly joined clients
-    byte[] sendChatHistory() throws IOException;
+    void syncChatHistory(IClient client) throws IOException;
 
 }

@@ -37,8 +37,8 @@ public class Client extends UnicastRemoteObject implements IClient {
     private boolean isManager = false;
     private boolean hasAccess;
     private Canvas canvas;
-    private IBoardMgr server;
-    private Hashtable<String, Point> points = new Hashtable<>();
+    private final IBoardMgr server;
+    private final Hashtable<String, Point> points = new Hashtable<>();
 
     // Save canvas
     private String canvasName;
@@ -46,37 +46,37 @@ public class Client extends UnicastRemoteObject implements IClient {
 
     // UI window
     private JFrame window;
-    private final int windowWidth = 1000;
-    private final int windowHeight = 800;
+    private static final int windowWidth = 1000;
+    private static final int windowHeight = 800;
 
     // Emphasize selections with borders
+    private final Color bgColor = new Color(238, 238, 238);
     private final LineBorder border = new LineBorder(Color.BLACK, 2);
-    private final LineBorder antiBorder = new LineBorder(new Color(238, 238, 238), 2);
+    private final LineBorder antiBorder = new LineBorder(bgColor, 2);
 
     // Color buttons
     private JButton blackBt, whiteBt, grayBt, silverBt, maroonBt, redBt, purpleBt, fuchsiaBt;
     private JButton greenBt, limeBt, oliveBt, yellowBt, navyBt, blueBt, tealBt, aquaBt;
-    private ArrayList<JButton> colorBts = new ArrayList<>();
-    private JButton colorUse = new JButton();
+    private final ArrayList<JButton> colorBts = new ArrayList<>();
+    private final JButton colorUse = new JButton();
 
     // Draw buttons
     private JButton freeBt, lineBt, circleBt, triangleBt, rectangleBt, textBt, eraserBt;
-    private ArrayList<JButton> drawBts = new ArrayList<>();
-    private final int drawBtWidth = 40;
-    private final int drawBtHeight = 40;
+    private final ArrayList<JButton> drawBts = new ArrayList<>();
+    private static final int drawBtWidth = 30;
+    private static final int drawBtHeight = 30;
 
     // Function buttons
-    private JButton newBt, openBt, saveBt, saveAsBt, closeBt, sendBt;
-    private ArrayList<JButton> funcBts = new ArrayList<>();
+    private JButton newBt, openBt, saveBt, saveAsBt;
+    private final ArrayList<JButton> funcBts = new ArrayList<>();
+    private static final int funcBtWidth = 20;
+    private static final int funcBtHeight = 20;
 
     // Client list
-    private DefaultListModel<String> clientList = new DefaultListModel<>();
-    private JList<String> clientJList;
-    private JScrollPane clientWindow;
+    private final DefaultListModel<String> clientList = new DefaultListModel<>();
 
     // Chat window
-    private DefaultListModel<String> chatHistory = new DefaultListModel<>();
-    private JList<String> chat;
+    private final DefaultListModel<String> chatHistory = new DefaultListModel<>();
     private JTextField chatMsg;
     private JScrollPane chatWindow;
 
@@ -93,8 +93,8 @@ public class Client extends UnicastRemoteObject implements IClient {
     }
 
     @Override
-    public void setName(String s) throws RemoteException {
-        this.username = s;
+    public void setName(String name) throws RemoteException {
+        this.username = name;
     }
 
     @Override
@@ -103,14 +103,9 @@ public class Client extends UnicastRemoteObject implements IClient {
     }
 
     @Override
-    public boolean isManager() throws RemoteException {
-        return isManager;
-    }
-
-    @Override
-    public boolean needAccess(String name) throws RemoteException {
+    public boolean needAccess(String username) throws RemoteException {
         return JOptionPane.showConfirmDialog(window,
-                "Approve " + name + " to join as an editor.", "New editor request",
+                username + " wants to share your white board.", "New share request",
                 JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION;
     }
 
@@ -125,16 +120,12 @@ public class Client extends UnicastRemoteObject implements IClient {
     }
 
     @Override
-    public void updateClientList(Set<IClient> clients) throws RemoteException {
+    public void syncClientList(Set<IClient> clients) throws RemoteException {
         this.clientList.removeAllElements();
+        this.clientList.addElement("Online users");
         for (IClient c: clients) {
             this.clientList.addElement(c.getName());
         }
-    }
-
-    @Override
-    public Canvas getCanvas() throws RemoteException {
-        return this.canvas;
     }
 
     @Override
@@ -145,26 +136,28 @@ public class Client extends UnicastRemoteObject implements IClient {
         }
         Shape shape = null;
         if (draw.getDrawState().equals("start")) {
-            points.put(draw.getUsername(), draw.getPoint());
+            this.points.put(draw.getUsername(), draw.getPoint());
             return;
         }
         // Draw from the start point
-        Point start = points.get(draw.getUsername());
-        canvas.getG2().setPaint(draw.getColor());
+        Color orgColor = this.canvas.getColor();
+        Point start = this.points.get(draw.getUsername());
+        this.canvas.getG2().setPaint(draw.getColor());
 
         switch (draw.getDrawState()) {
-            // Sync mouse motion
+            // Sync mouse motion when free-hand drawing or using eraser
             case "drawing":
                 if (draw.getDrawType().equals("eraser")) {
-                    canvas.getG2().setStroke(new BasicStroke(15.0f));
+                    canvas.getG2().setStroke(Canvas.thickStroke);
                 }
                 shape = canvas.drawLine(start, draw.getPoint());
                 points.put(draw.getUsername(), draw.getPoint());
                 canvas.getG2().draw(shape);
                 canvas.repaint();
                 break;
+            // Sync mouse release
             case "end":
-                if (draw.getDrawType().equals("free") || draw.getDrawType().equals("line")) {
+                if (draw.getDrawType().equals("free") || draw.getDrawType().equals("line") || draw.getDrawType().equals("eraser")) {
                     shape = canvas.drawLine(start, draw.getPoint());
                 } else if (draw.getDrawType().equals("circle")) {
                     shape = canvas.drawCircle(start, draw.getPoint());
@@ -173,10 +166,8 @@ public class Client extends UnicastRemoteObject implements IClient {
                 } else if (draw.getDrawType().equals("rectangle")) {
                     shape = canvas.drawRectangle(start, draw.getPoint());
                 } else if (draw.getDrawType().equals("text")) {
-                    canvas.getG2().setFont(new Font("Calibri", Font.PLAIN, 20));
+                    canvas.getG2().setFont(Canvas.defaultFont);
                     canvas.getG2().drawString(draw.getText(), draw.getPoint().x, draw.getPoint().y);
-                } else if (draw.getDrawType().equals("eraser")) {
-                    canvas.getG2().setStroke(new BasicStroke(1.0f));
                 }
                 // Draw on the canvas if it is not a text input
                 if (!draw.getDrawType().equals("text")) {
@@ -188,6 +179,9 @@ public class Client extends UnicastRemoteObject implements IClient {
                 }
                 canvas.repaint();
                 points.remove(draw.getUsername());
+                // Restore the original color and stroke
+                canvas.getG2().setPaint(orgColor);
+                canvas.getG2().setStroke(Canvas.defaultStroke);
                 break;
         }
     }
@@ -211,14 +205,10 @@ public class Client extends UnicastRemoteObject implements IClient {
     }
 
     @Override
-    public void forceQuit() throws IOException {
-        // Create a separate thread to end the program when the client is forced to quit
+    public void forceQuit() {
+        // End the program when the client is not approved to join in
         if(!this.hasAccess) {
-            Thread t = new Thread(() -> {
-                JOptionPane.showMessageDialog(null, "Access denied.",
-                        "Warning", JOptionPane.WARNING_MESSAGE);
-                System.exit(0);
-            });
+            Thread t = new Thread(() -> System.exit(0));
             t.start();
             return;
         }
@@ -237,8 +227,18 @@ public class Client extends UnicastRemoteObject implements IClient {
     }
 
     @Override
-    public byte[] getChatHistory() throws IOException {
-        return new byte[0];
+    public DefaultListModel<String> getChatHistory() {
+        return this.chatHistory;
+    }
+
+    @Override
+    public void syncChatHistory(DefaultListModel<String> history) throws RemoteException {
+        if (isManager) {
+            this.chatHistory.addElement("Chat history");
+        }
+        for(Object msg: history.toArray()) {
+            this.chatHistory.addElement((String) msg);
+        }
     }
 
 
@@ -247,9 +247,9 @@ public class Client extends UnicastRemoteObject implements IClient {
         FileDialog dialog = new FileDialog(this.window, "Open a canvas", FileDialog.LOAD);
         dialog.setVisible(true);
         if (dialog.getFile() != null) {
-            this.canvasPath = dialog.getDirectory();
             this.canvasName = dialog.getFile();
-            BufferedImage image = ImageIO.read(new File(canvasName + canvasPath));
+            this.canvasPath = dialog.getDirectory();
+            BufferedImage image = ImageIO.read(new File(canvasPath + canvasName));
             canvas.renderFrame(image);
             ByteArrayOutputStream imageArray = new ByteArrayOutputStream();
             ImageIO.write(image, "png", imageArray);
@@ -258,11 +258,12 @@ public class Client extends UnicastRemoteObject implements IClient {
     }
 
     private void mgrSave() throws IOException{
-        if(this.canvasName == null) {
-            JOptionPane.showMessageDialog(null, "Save it as a file first!");
+        if(this.canvasName != null) {
+            ImageIO.write(canvas.getFrame(), "png", new File(canvasPath + canvasName));
         }
         else {
-            ImageIO.write(canvas.getFrame(), "png", new File(canvasPath + canvasName));
+            JOptionPane.showMessageDialog(null, "Please save it as a file first.",
+                    "Reminder", JOptionPane.INFORMATION_MESSAGE);
         }
     }
 
@@ -270,10 +271,30 @@ public class Client extends UnicastRemoteObject implements IClient {
         FileDialog dialog = new FileDialog(window, "Save canvas", FileDialog.SAVE);
         dialog.setVisible(true);
         if (dialog.getFile() != null) {
-            this.canvasPath = dialog.getDirectory();
             this.canvasName = dialog.getFile();
+            this.canvasPath = dialog.getDirectory();
             ImageIO.write(canvas.getFrame(), "png", new File(canvasPath + canvasName + ".png"));
         }
+    }
+
+
+    // Fill borders on selected button and move borders on the rest
+    public void selectButton(JButton buttonSelected, ArrayList<JButton> bts) {
+        for (JButton bt: bts) {
+            if (bt == buttonSelected) {
+                bt.setBorder(this.border);
+            } else {
+                bt.setBorder(this.antiBorder);
+            }
+        }
+    }
+
+    // Resize the icon image
+    public ImageIcon resizeIcon(String path, int width, int height) {
+        ImageIcon icon = new ImageIcon(String.valueOf(Paths.get(path).toAbsolutePath()));
+        Image iconImg = icon.getImage();
+        Image resizeImg = iconImg.getScaledInstance(width, height, java.awt.Image.SCALE_SMOOTH);
+        return new ImageIcon(resizeImg);
     }
 
 
@@ -358,15 +379,23 @@ public class Client extends UnicastRemoteObject implements IClient {
             else if (event.getSource() == newBt) {
                 if (isManager) {
                     try {
-                        server.cleanCanvas();
+                        if (JOptionPane.showConfirmDialog(window,
+                                "Are you sure you want to create a new canvas?\nUnsaved changes will be discarded!",
+                                "Warning", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_NO_OPTION) {
+                            server.cleanCanvas();
+                        }
                     } catch (RemoteException e) {
-                        JOptionPane.showMessageDialog(null, "Server error, unable to create a new canvas!");
+                        System.out.println("Error with creating a new canvas!");
                     }
                 }
             } else if (event.getSource() == openBt) {
                 if (isManager) {
                     try {
-                        mgrOpen();
+                        if (JOptionPane.showConfirmDialog(window,
+                                "Are you sure you want to open another canvas?\nUnsaved changes will be discarded!",
+                                "Warning", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_NO_OPTION) {
+                            mgrOpen();
+                        }
                     } catch (IOException e) {
                         System.out.println("Error with opening a canvas!");
                     }
@@ -390,26 +419,6 @@ public class Client extends UnicastRemoteObject implements IClient {
             }
         }
     };
-
-
-    // Fill borders on selected button and move borders on the rest
-    public void selectButton(JButton buttonSelected, ArrayList<JButton> bts) {
-        for (JButton bt: bts) {
-            if (bt == buttonSelected) {
-                bt.setBorder(this.border);
-            } else {
-                bt.setBorder(this.antiBorder);
-            }
-        }
-    }
-
-    // Resize the icon image
-    public ImageIcon resizeIcon(String path) {
-        ImageIcon icon = new ImageIcon(String.valueOf(Paths.get(path).toAbsolutePath()));
-        Image iconImg = icon.getImage();
-        Image resizeImg = iconImg.getScaledInstance(this.drawBtWidth, this.drawBtHeight, java.awt.Image.SCALE_SMOOTH);
-        return new ImageIcon(resizeImg);
-    }
 
 
     // Initialise and render the UI
@@ -489,42 +498,42 @@ public class Client extends UnicastRemoteObject implements IClient {
             bt.setOpaque(true);
             bt.addActionListener(actionListener);
         }
-
         colorUse.setBackground(Color.black);
+
 
         // Configure drawing buttons
         ImageIcon icon;
-        icon = resizeIcon("src/icons/free.png");
+        icon = resizeIcon("src/icons/free.png", drawBtWidth, drawBtHeight);
         freeBt = new JButton(icon);
         freeBt.setToolTipText("Free-hand");
         this.drawBts.add(freeBt);
 
-        icon = resizeIcon("src/icons/line.png");
+        icon = resizeIcon("src/icons/line.png", drawBtWidth, drawBtHeight);
         lineBt = new JButton(icon);
         lineBt.setToolTipText("Line");
         this.drawBts.add(lineBt);
 
-        icon = resizeIcon("src/icons/circle.png");
+        icon = resizeIcon("src/icons/circle.png", drawBtWidth, drawBtHeight);
         circleBt = new JButton(icon);
         circleBt.setToolTipText("Circle");
         this.drawBts.add(circleBt);
 
-        icon = resizeIcon("src/icons/triangle.png");
+        icon = resizeIcon("src/icons/triangle.png", drawBtWidth, drawBtHeight);
         triangleBt = new JButton(icon);
         triangleBt.setToolTipText("Triangle");
         this.drawBts.add(triangleBt);
 
-        icon = resizeIcon("src/icons/rectangle.png");
+        icon = resizeIcon("src/icons/rectangle.png", drawBtWidth, drawBtHeight);
         rectangleBt = new JButton(icon);
         rectangleBt.setToolTipText("Rectangle");
         this.drawBts.add(rectangleBt);
 
-        icon = resizeIcon("src/icons/text.png");
+        icon = resizeIcon("src/icons/text.png", drawBtWidth, drawBtHeight);
         textBt = new JButton(icon);
         textBt.setToolTipText("Text");
         this.drawBts.add(textBt);
 
-        icon = resizeIcon("src/icons/eraser.png");
+        icon = resizeIcon("src/icons/eraser.png", drawBtWidth, drawBtHeight);
         eraserBt = new JButton(icon);
         eraserBt.setToolTipText("Eraser");
         this.drawBts.add(eraserBt);
@@ -534,20 +543,25 @@ public class Client extends UnicastRemoteObject implements IClient {
             bt.addActionListener(actionListener);
         }
 
+
         // Configure function buttons for client manager
-        newBt = new JButton("New");
+        icon = resizeIcon("src/icons/new.png", funcBtWidth, funcBtHeight);
+        newBt = new JButton(icon);
         newBt.setToolTipText("New canvas");
         this.funcBts.add(newBt);
 
-        openBt = new JButton("Open");
+        icon = resizeIcon("src/icons/open.png", funcBtWidth, funcBtHeight);
+        openBt = new JButton(icon);
         openBt.setToolTipText("Open a canvas");
         this.funcBts.add(openBt);
 
-        saveBt = new JButton("Save");
+        icon = resizeIcon("src/icons/save.png", funcBtWidth, funcBtHeight);
+        saveBt = new JButton(icon);
         saveBt.setToolTipText("Save the canvas");
         this.funcBts.add(saveBt);
 
-        saveAsBt = new JButton("Save As");
+        icon = resizeIcon("src/icons/saveAs.png", funcBtWidth, funcBtHeight);
+        saveAsBt = new JButton(icon);
         saveAsBt.setToolTipText("Save as a file");
         this.funcBts.add(saveAsBt);
 
@@ -555,22 +569,14 @@ public class Client extends UnicastRemoteObject implements IClient {
             bt.addActionListener(actionListener);
         }
 
-        if (!isManager) {
-            newBt.setVisible(false);
-            openBt.setVisible(false);
-            saveBt.setVisible(false);
-            saveAsBt.setVisible(false);
-        }
 
-        // Show all editors of the canvas.
-        clientJList = new JList<>(this.clientList);
-        clientWindow = new JScrollPane(clientJList);
-        clientWindow.setMinimumSize(new Dimension(100, 290));
-        if(isManager) {
-            clientWindow.setMinimumSize(new Dimension(100, 150));
-        }
+        // Show all online users
+        JList<String> clientJList = new JList<>(this.clientList);
+        JScrollPane clientWindow = new JScrollPane(clientJList);
+        clientWindow.setMinimumSize(new Dimension(50, 300));
+        clientWindow.setBorder(border);
 
-        // Manager can kick out users
+        // Manager can double-click on usernames to kick out users
         if (isManager) {
             clientJList.addMouseListener(new MouseAdapter() {
                 @Override
@@ -582,10 +588,9 @@ public class Client extends UnicastRemoteObject implements IClient {
                         String kickName = list.getModel().getElementAt(index);
                         try {
                             if(!getName().equals(kickName)) {
-                                int dialog = JOptionPane.showConfirmDialog(window,
+                                if(JOptionPane.showConfirmDialog(window,
                                         "Are you sure you want to kick " + kickName + " out?",
-                                        "Warning", JOptionPane.YES_NO_OPTION);
-                                if(dialog == JOptionPane.YES_OPTION) {
+                                        "Warning", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
                                     try {
                                         server.kickClient(kickName);
                                         server.syncClientList();
@@ -604,17 +609,58 @@ public class Client extends UnicastRemoteObject implements IClient {
             });
         }
 
+        // All clients are forced to quit when the manager leaves
+        window.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+                if (isManager) {
+                    try {
+                        if (JOptionPane.showConfirmDialog(window,
+                                "Are you sure you want to end the session?\nAll participants will be removed.",
+                                "Warning", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
+                            server.removeAllClients();
+                            System.exit(0);
+                        }
+                    } catch (IOException e) {
+                            System.err.println("IO error");
+                    }
+                } else {
+                    try {
+                        if (JOptionPane.showConfirmDialog(window,
+                                "Are you sure you want to leave the session?", "Warning",
+                                JOptionPane.YES_NO_OPTION,
+                                JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
+                            server.quitClient(username);
+                            server.syncClientList();
+                            System.exit(0);
+                        }
+                    } catch (RemoteException e) {
+                            JOptionPane.showMessageDialog(null, "Unable to connect to the server!");
+                    }
+                }
+            }
+        });
+
+
         // Configure chat window
-        chat = new JList<>(chatHistory);
+        JList<String> chat = new JList<>(chatHistory);
+        // Display chat history
         chatWindow = new JScrollPane(chat);
-        chatWindow.setMinimumSize(new Dimension(100, 100));
+        chatWindow.setMinimumSize(new Dimension(50, 300));
+        chatWindow.setBorder(border);
+        // Type chat message here
         chatMsg = new JTextField();
-        chatWindow.setMinimumSize(new Dimension(100, 10));
-        sendBt = new JButton("Send");
+        chatMsg.setMinimumSize(new Dimension(50, 10));
+        chatMsg.setBorder(border);
+        // Button to send message
+        icon = resizeIcon("src/icons/send.png", drawBtWidth, drawBtHeight);
+        JButton sendBt = new JButton(icon);
         sendBt.addMouseListener(new MouseAdapter() {
             @Override
-            public void mouseClicked(MouseEvent evt) {
-                if(!chatMsg.getText().equals("")) {
+            public void mouseClicked(MouseEvent event) {
+                if(chatMsg.getText().equals("")) {
+                    JOptionPane.showMessageDialog(null, "Message cannot be empty.");
+                } else {
                     try {
                         server.broadcastChat(username + ": "+ chatMsg.getText());
                         // Show the latest message
@@ -626,46 +672,10 @@ public class Client extends UnicastRemoteObject implements IClient {
                         JOptionPane.showMessageDialog(null, "Server is down, failed to send the message!");
                     }
                     chatMsg.setText("");
-                } else {
-                    JOptionPane.showMessageDialog(null, "Message cannot be empty.");
                 }
             }
         });
 
-
-        // All clients are forced to quit when the manager leaves
-        window.addWindowListener(new java.awt.event.WindowAdapter() {
-            @Override
-            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
-                if (isManager) {
-                    if (JOptionPane.showConfirmDialog(window,
-                            "Are you sure you want to end the session?", "Warning",
-                            JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
-                        try {
-                            server.removeAllClients();
-                        } catch (IOException e) {
-                            System.err.println("IO error");
-                        } finally {
-                            System.exit(0);
-                        }
-                    }
-                } else {
-                    if (JOptionPane.showConfirmDialog(window,
-                            "Are you sure you want to leave the session?", "Warning",
-                            JOptionPane.YES_NO_OPTION,
-                            JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
-                        try {
-                            server.quitClient(username);
-                            server.syncClientList();
-                        } catch (RemoteException e) {
-                            JOptionPane.showMessageDialog(null, "Unable to connect to the server!");
-                        } finally {
-                            System.exit(0);
-                        }
-                    }
-                }
-            }
-        });
 
         // UI design
         GroupLayout layout = new GroupLayout(container);
@@ -673,7 +683,6 @@ public class Client extends UnicastRemoteObject implements IClient {
         layout.setAutoCreateGaps(true);
         layout.setAutoCreateContainerGaps(true);
         canvas.setBorder(border);
-        // canvas.setOpaque(true);
 
         // Horizontal layout
         layout.setHorizontalGroup(layout.createSequentialGroup()
@@ -768,6 +777,13 @@ public class Client extends UnicastRemoteObject implements IClient {
                                 .addComponent(eraserBt)
                                 .addComponent(colorUse))))));
 
+        // Only manager has access to functional buttons
+        if (!isManager) {
+            newBt.setVisible(false);
+            openBt.setVisible(false);
+            saveBt.setVisible(false);
+            saveAsBt.setVisible(false);
+        }
 
         // Same button size
         layout.linkSize(SwingConstants.HORIZONTAL, newBt, openBt, saveBt, saveAsBt);
@@ -781,7 +797,6 @@ public class Client extends UnicastRemoteObject implements IClient {
         window.setLocationRelativeTo(null);
         window.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         window.setVisible(true);
-
     }
 
 }

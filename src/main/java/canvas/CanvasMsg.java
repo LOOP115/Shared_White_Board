@@ -11,15 +11,15 @@ import java.rmi.server.UnicastRemoteObject;
 public class CanvasMsg extends UnicastRemoteObject implements ICanvasMsg {
 
     private static final long serialVersionUID = 1L;
-    private String state;
-    private String drawType;
-    private Color color;
-    private Point point;
-    private String text;
-    private String username;
+    private final String drawState;
+    private final String drawType;
+    private final Color color;
+    private final Point point;
+    private final String text;
+    private final String username;
 
     public CanvasMsg(String state, String msgType, Color color, Point point, String text, String username) throws RemoteException {
-        this.state = state;
+        this.drawState = state;
         this.drawType = msgType;
         this.color = color;
         this.point = point;
@@ -29,7 +29,7 @@ public class CanvasMsg extends UnicastRemoteObject implements ICanvasMsg {
 
     @Override
     public String getDrawState() throws RemoteException {
-        return this.state;
+        return this.drawState;
     }
 
     @Override
@@ -56,4 +56,5 @@ public class CanvasMsg extends UnicastRemoteObject implements ICanvasMsg {
     public String getUsername() throws RemoteException {
         return this.username;
     }
+
 }

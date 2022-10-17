@@ -9,6 +9,7 @@ import client.IClient;
 import client.ClientMgr;
 import canvas.ICanvasMsg;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.io.Serializable;
 import java.rmi.RemoteException;
@@ -30,38 +31,52 @@ public class BoardMgr extends UnicastRemoteObject implements IBoardMgr, Serializ
         // The first client is the manager
         if (this.manager.hasNoClient()) {
             client.setAsManager();
-            clientManager = client;
+            this.clientManager = client;
             client.setName("(Host) " + client.getName());
             this.manager.addClient(client);
             syncClientList();
+            try {
+                syncChatHistory(client);
+            } catch (IOException e) {
+                System.out.println("Error syncing chat history!");
+            }
             return;
         }
 
-        // Other clients need to have permission
+        // Other clients need to be approved by the manager to join in
         boolean access = true;
         try {
             access = client.needAccess(client.getName());
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println("Unable to get access to the canvas!");
         }
 
-        // Update client's access
-        if (!access) {
+        if (access) {
+            this.manager.addClient(client);
+            syncClientList();
+            try {
+                syncChatHistory(client);
+            } catch (IOException e) {
+                System.out.println("Error syncing chat history!");
+            }
+        } else {
             try {
                 client.setAccess(false);
             } catch (Exception e) {
                 System.out.println("Unable to set access!");
             }
-        } else {
-            // Add client to the list
-            this.manager.addClient(client);
-            syncClientList();
         }
     }
 
     @Override
-    public boolean isManager(String username) throws RemoteException {
-        return this.clientManager.getName().equals(username);
+    public boolean validUsername(String username) throws RemoteException {
+        boolean res = true;
+        for (IClient c : getClients()) {
+            if (username.equals(c.getName()) || c.getName().equals("(Host) " + username)) {
+                res = false;
+            }
+        }
+        return res;
     }
 
     @Override
@@ -72,7 +87,7 @@ public class BoardMgr extends UnicastRemoteObject implements IBoardMgr, Serializ
     @Override
     public void syncClientList() throws RemoteException {
         for (IClient c: this.manager.getClientList()) {
-            c.updateClientList(this.manager.getClientList());
+            c.syncClientList(this.manager.getClientList());
         }
     }
 
@@ -95,7 +110,7 @@ public class BoardMgr extends UnicastRemoteObject implements IBoardMgr, Serializ
                 try {
                     c.forceQuit();
                 } catch (IOException e) {
-                    System.out.println("Can not quit!");
+                    System.out.println("Cannot force quit!");
                 }
                 this.manager.delClient(c);
                 syncClientList();
@@ -111,7 +126,7 @@ public class BoardMgr extends UnicastRemoteObject implements IBoardMgr, Serializ
             this.manager.delClient(c);
             c.forceQuit();
         }
-        System.out.println("Manager has closed the canvas");
+        System.out.println("Manager has end the session");
     }
 
     @Override
@@ -129,9 +144,7 @@ public class BoardMgr extends UnicastRemoteObject implements IBoardMgr, Serializ
     @Override
     public void sendExistCanvas(byte[] canvas) throws IOException {
         for (IClient c: this.manager.getClientList()) {
-            if (!c.isManager()) {
-                c.overrideCanvas(canvas);
-            }
+            c.overrideCanvas(canvas);
         }
     }
 
@@ -150,8 +163,8 @@ public class BoardMgr extends UnicastRemoteObject implements IBoardMgr, Serializ
     }
 
     @Override
-    public byte[] sendChatHistory() throws IOException {
-        return this.clientManager.getChatHistory();
+    public void syncChatHistory(IClient client) throws IOException {
+        client.syncChatHistory(this.clientManager.getChatHistory());
     }
 
 }

@@ -4,10 +4,10 @@
 
 package client;
 
-import canvas.Canvas;
 import canvas.ICanvasMsg;
 import server.IBoardMgr;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
@@ -24,11 +24,8 @@ public interface IClient extends Remote {
     // Set the client as manager
     void setAsManager() throws RemoteException;
 
-    // Check if client is the manager
-    boolean isManager() throws RemoteException;
-
     // Client requires access to the canvas
-    boolean needAccess(String name) throws RemoteException;
+    boolean needAccess(String username) throws RemoteException;
 
     // Get client's access status
     boolean getAccess() throws RemoteException;
@@ -37,10 +34,7 @@ public interface IClient extends Remote {
     void setAccess(boolean access) throws RemoteException;
 
     // Update the client list
-    void updateClientList(Set<IClient> clientList) throws RemoteException;
-
-    // Get client's canvas
-    Canvas getCanvas() throws RemoteException;
+    void syncClientList(Set<IClient> clientList) throws RemoteException;
 
     // Sync new updates on the canvas
     void syncCanvas(ICanvasMsg draw) throws RemoteException;
@@ -61,7 +55,9 @@ public interface IClient extends Remote {
     void syncChat(String msg) throws RemoteException;
 
     // Get current chat history
-    byte[] getChatHistory() throws IOException;
+    DefaultListModel<String> getChatHistory() throws IOException;
+
+    void syncChatHistory(DefaultListModel<String> chatHistory) throws RemoteException;
 
     // Render UI
     void renderUI(IBoardMgr boardMgr) throws RemoteException;

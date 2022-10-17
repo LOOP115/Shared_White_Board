@@ -15,7 +15,6 @@ import java.awt.event.MouseMotionAdapter;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
-import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.WritableRaster;
@@ -25,27 +24,25 @@ import java.rmi.RemoteException;
 public class Canvas extends JComponent {
 
     private static final long serialVersionUID = 1L;
-    private final String username;
     private final boolean isManager;
-    private static final int canvasWidth = 700;
-    private static final int canvasHeight = 450;
-    private String drawType;
-    private Color color;
+    private String drawType = "free";
+    private Color color = Color.black;
     private Point start, end;
-    private String text;
+    private String text = "";
     private final IBoardMgr boardMgr;
     private Graphics2D g2;
     private BufferedImage frame;
     private BufferedImage prevFrame;
 
+    public static final int canvasWidth = 900;
+    public static final int canvasHeight = 800;
+    public static final BasicStroke defaultStroke = new BasicStroke(2f);
+    public static final BasicStroke thickStroke = new BasicStroke(50f);
+    public static final Font defaultFont = new Font("Calibri",Font.PLAIN, 30);
 
     public Canvas(IBoardMgr boardMgr, String username, boolean isManager) {
         this.boardMgr = boardMgr;
-        this.username = username;
         this.isManager = isManager;
-        this.color = Color.black;
-        this.drawType = "free";
-        this.text = "";
 
         setDoubleBuffered(false);
         // Mouse pressed => start position
@@ -99,19 +96,17 @@ public class Canvas extends JComponent {
                             break;
                         case "text":
                             renderFrame(prevFrame);
-                            g2.setFont(new Font("Calibri", Font.PLAIN, 20));
-                            g2.drawString("Type your text here", end.x, end.y);
+                            g2.setFont(defaultFont);
+                            g2.drawString("Text", end.x, end.y);
                             shape = drawText(start);
-                            Stroke dashed = new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 1, new float[]{3}, 0);
-                            g2.setStroke(dashed);
                             break;
                         case "eraser":
                             shape = drawLine(start, end);
                             start = end;
                             g2.setPaint(Color.white);
-                            g2.setStroke(new BasicStroke(10.0f));
+                            g2.setStroke(thickStroke);
                             try {
-                                ICanvasMsg msg = new CanvasMsg("drawing", drawType, color, end, text, username);
+                                ICanvasMsg msg = new CanvasMsg("drawing", drawType, Color.white, end, text, username);
                                 boardMgr.broadcastMsg(msg);
                             } catch (RemoteException e) {
                                 JOptionPane.showMessageDialog(null, "Unable to connect to server!");
@@ -136,6 +131,7 @@ public class Canvas extends JComponent {
                     switch (drawType) {
                         case "line":
                         case "free":
+                        case "eraser":
                             shape = drawLine(start, end);
                             break;
                         case "circle":
@@ -149,18 +145,25 @@ public class Canvas extends JComponent {
                             break;
                         case "text":
                             // Ask for text input
-                            text = JOptionPane.showInputDialog("Type the text here");
+                            text = JOptionPane.showInputDialog("Type your text here");
                             if (text == null) text = "";
                             renderFrame(prevFrame);
-                            g2.setFont(new Font("Calibri", Font.PLAIN, 20));
+                            g2.setFont(defaultFont);
                             g2.drawString(text, end.x, end.y);
-                            g2.setStroke(new BasicStroke(1.0f));
                             break;
-                        case "eraser":
-                            shape = drawLine(start, end);
-                            g2.setPaint(color);
-                            g2.setStroke(new BasicStroke(2.0f));
-                            break;
+                    }
+                    // Broadcast changes to all clients
+                    try {
+                        ICanvasMsg msg;
+                        if ("eraser".equals(drawType)) {
+                            msg = new CanvasMsg("end", drawType, Color.white, end, text, username);
+                        } else {
+                            msg = new CanvasMsg("end", drawType, color, end, text, username);
+                        }
+
+                        boardMgr.broadcastMsg(msg);
+                    } catch (RemoteException e) {
+                        JOptionPane.showMessageDialog(null, "Unable to connect to server!");
                     }
                     // Draw on the canvas if it is not a text input
                     if (!drawType.equals("text")) {
@@ -171,13 +174,9 @@ public class Canvas extends JComponent {
                         }
                     }
                     repaint();
-                    // Broadcast changes to all clients
-                    try {
-                        ICanvasMsg msg = new CanvasMsg("end", drawType, color, end, text, username);
-                        boardMgr.broadcastMsg(msg);
-                    } catch (RemoteException e) {
-                        JOptionPane.showMessageDialog(null, "Unable to connect to server!");
-                    }
+                    // Restore the original color and stroke
+                    g2.setPaint(color);
+                    g2.setStroke(defaultStroke);
                 }
             }
         });
@@ -185,9 +184,36 @@ public class Canvas extends JComponent {
     }
 
 
-    public String getDrawType() {
-        return drawType;
+    // Render the canvas for a newly joined client
+    @Override
+    public void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        if (frame == null) {
+            // Render a blank for the first joined client (manager)
+            if (isManager) {
+                frame = new BufferedImage(canvasWidth, canvasHeight, BufferedImage.TYPE_INT_RGB);
+                g2 = (Graphics2D) frame.getGraphics();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setPaint(this.color);
+                g2.setStroke(defaultStroke);
+                cleanCanvas();
+            } else {
+                // Render the current canvas to the newly joined client
+                try {
+                    byte[] image = boardMgr.sendCurrentCanvas();
+                    frame = ImageIO.read(new ByteArrayInputStream(image));
+                    g2 = (Graphics2D) frame.getGraphics();
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2.setPaint(this.color);
+                    g2.setStroke(defaultStroke);
+                } catch (Exception e) {
+                    System.out.println("Render error");
+                }
+            }
+        }
+        g.drawImage(frame, 0, 0, null);
     }
+
 
     public Color getColor() {
         return color;
@@ -204,36 +230,6 @@ public class Canvas extends JComponent {
     public void renderFrame(BufferedImage f) {
         g2.drawImage(f, 0, 0, null);
         repaint();
-    }
-
-    // Render the canvas for a newly joined client
-    @Override
-    public void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        if (frame == null) {
-            // Render a blank for the first joined client (manager)
-            if (isManager) {
-                frame = new BufferedImage(canvasWidth, canvasHeight, BufferedImage.TYPE_INT_RGB);
-                g2 = (Graphics2D) frame.getGraphics();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setPaint(this.color);
-                g2.setStroke(new BasicStroke(2.0f));
-                cleanCanvas();
-            } else {
-                // Render the current canvas to the newly joined client
-                try {
-                    byte[] image = boardMgr.sendCurrentCanvas();
-                    frame = ImageIO.read(new ByteArrayInputStream(image));
-                    g2 = (Graphics2D) frame.getGraphics();
-                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                    g2.setPaint(this.color);
-                    g2.setStroke(new BasicStroke(2.0f));
-                } catch (Exception e) {
-                    System.out.println("Render error");
-                }
-            }
-        }
-        g.drawImage(frame, 0, 0, null);
     }
 
     // Clean up the canvas
@@ -300,8 +296,8 @@ public class Canvas extends JComponent {
 
     public Shape drawTriangle(Point start, Point end) {
         int minX = Math.min(start.x, end.x);
-        int minY = Math.min(start.y, end.y);
         int maxX = Math.max(start.x, end.x);
+        int minY = Math.min(start.y, end.y);
         int maxY = Math.max(start.y, end.y);
         int[] x = {minX, (minX + maxX)/2, maxX};
         int[] y = {maxY, minY, maxY};
@@ -324,7 +320,7 @@ public class Canvas extends JComponent {
         int y = start.y;
         int width = 120;
         int height = 40;
-        return new RoundRectangle2D.Double(x, y, width, height, 15, 15);
+        return new Rectangle2D.Double(x, y, width, height);
     }
 
 /*********************************************The Sixteen Named Colors*************************************************/

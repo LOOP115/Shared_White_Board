@@ -1,24 +1,24 @@
 /**
- * Run the client to join a board.
+ * Run the first client to create a board.
+ * This client will be the manager.
  */
 
 package client;
 
 import server.IBoardMgr;
 
-import javax.swing.*;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
 
-public class User {
+public class Creator {
 
     public static void main(String[] args) {
 
         // Default IP address and port for server
         String serverIP = "localhost";
         String serverPort = "3200";
-        // Default username for users
-        String username = "Alien";
+        // Default username for the first user
+        String username = "Genesis";
 
         // Specify IP address and port from arguments
         if (args.length > 0) {
@@ -36,29 +36,14 @@ public class User {
             String serverAddress = "//" + serverIP + ":"+ serverPort + "/Canvas";
             IBoardMgr server = (IBoardMgr) Naming.lookup(serverAddress);
 
-            // Client login
-            if (!server.validUsername(username)) {
-                System.out.println("The name has been taken!\nPlease enter a new one.");
-            }
+            // Login and create the white board
             IClient client = new Client(server, username);
             try {
                 server.login(client);
             } catch(RemoteException e) {
                 System.err.println("Login error, unable to connect to server!");
             }
-
-            // Judge client's access
-            if (client.getAccess()) {
-                // Render UI
-                client.renderUI(server);
-            } else {
-                server.quitClient(username);
-                JOptionPane.showMessageDialog(null,
-                        "Access denied!\nPlease contact the manager to obtain access.",
-                        "Warning", JOptionPane.INFORMATION_MESSAGE);
-                client.forceQuit();
-            }
-
+            client.renderUI(server);
         } catch(Exception e) {
             System.err.println("Connection error!");
         }
