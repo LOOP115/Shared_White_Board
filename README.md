@@ -22,7 +22,7 @@ java -jar JoinWhiteBoard.jar <serverIP> <serverPort> <username>
 java -jar JoinWhiteBoard.jar 127.0.0.1 3200 User
 ```
 
-**Note: Need to specify the absolute path of directory storing icon images since jar files can only recognise absolute paths. Directory path can be modified in [Client.java#line53](src/main/java/client/Client.java#line53).**
+**Note: Need to specify the absolute path of directory storing icon images since jar files can only recognise absolute paths. Directory path can be modified in [Client.java#L53](src/main/java/client/Client.java#L53).**
 
 
 
