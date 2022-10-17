@@ -1,5 +1,8 @@
 /**
- * Class of client using the white board
+ * Class of client using the white board.
+ * Icon images of buttons are stored in a directory => icons.
+ * Since Jar files only recognise absolute paths, modify line 53 before build or run the project,
+ * otherwise buttons will have errors.
  */
 
 package client;
@@ -21,12 +24,11 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
-import java.util.Hashtable;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static javax.swing.GroupLayout.Alignment.*;
 
@@ -38,7 +40,9 @@ public class Client extends UnicastRemoteObject implements IClient {
     private boolean hasAccess;
     private Canvas canvas;
     private final IBoardMgr server;
-    private final Hashtable<String, Point> points = new Hashtable<>();
+
+    // Use ConcurrentHaspMap to sync drawings
+    private final ConcurrentHashMap<String, Point> points = new ConcurrentHashMap<>();
 
     // Save canvas
     private String canvasName;
@@ -48,6 +52,8 @@ public class Client extends UnicastRemoteObject implements IClient {
     private JFrame window;
     private static final int windowWidth = 1000;
     private static final int windowHeight = 800;
+    // Absolute path of icons directory
+    private static final String iconDirPath = "C:\\Users\\cjhm0\\Desktop\\WhiteBoard\\src\\icons\\";
 
     // Emphasize selections with borders
     private final Color bgColor = new Color(238, 238, 238);
@@ -85,7 +91,6 @@ public class Client extends UnicastRemoteObject implements IClient {
         this.username = username;
         this.hasAccess = true;
     }
-
 
     @Override
     public String getName() throws RemoteException {
@@ -291,7 +296,8 @@ public class Client extends UnicastRemoteObject implements IClient {
 
     // Resize the icon image
     public ImageIcon resizeIcon(String path, int width, int height) {
-        ImageIcon icon = new ImageIcon(String.valueOf(Paths.get(path).toAbsolutePath()));
+        // ImageIcon icon = new ImageIcon(String.valueOf(Paths.get(path).toAbsolutePath()));
+        ImageIcon icon = new ImageIcon(iconDirPath + path);
         Image iconImg = icon.getImage();
         Image resizeImg = iconImg.getScaledInstance(width, height, java.awt.Image.SCALE_SMOOTH);
         return new ImageIcon(resizeImg);
@@ -503,37 +509,37 @@ public class Client extends UnicastRemoteObject implements IClient {
 
         // Configure drawing buttons
         ImageIcon icon;
-        icon = resizeIcon("src/icons/free.png", drawBtWidth, drawBtHeight);
+        icon = resizeIcon("free.png", drawBtWidth, drawBtHeight);
         freeBt = new JButton(icon);
         freeBt.setToolTipText("Free-hand");
         this.drawBts.add(freeBt);
 
-        icon = resizeIcon("src/icons/line.png", drawBtWidth, drawBtHeight);
+        icon = resizeIcon("line.png", drawBtWidth, drawBtHeight);
         lineBt = new JButton(icon);
         lineBt.setToolTipText("Line");
         this.drawBts.add(lineBt);
 
-        icon = resizeIcon("src/icons/circle.png", drawBtWidth, drawBtHeight);
+        icon = resizeIcon("circle.png", drawBtWidth, drawBtHeight);
         circleBt = new JButton(icon);
         circleBt.setToolTipText("Circle");
         this.drawBts.add(circleBt);
 
-        icon = resizeIcon("src/icons/triangle.png", drawBtWidth, drawBtHeight);
+        icon = resizeIcon("triangle.png", drawBtWidth, drawBtHeight);
         triangleBt = new JButton(icon);
         triangleBt.setToolTipText("Triangle");
         this.drawBts.add(triangleBt);
 
-        icon = resizeIcon("src/icons/rectangle.png", drawBtWidth, drawBtHeight);
+        icon = resizeIcon("rectangle.png", drawBtWidth, drawBtHeight);
         rectangleBt = new JButton(icon);
         rectangleBt.setToolTipText("Rectangle");
         this.drawBts.add(rectangleBt);
 
-        icon = resizeIcon("src/icons/text.png", drawBtWidth, drawBtHeight);
+        icon = resizeIcon("text.png", drawBtWidth, drawBtHeight);
         textBt = new JButton(icon);
         textBt.setToolTipText("Text");
         this.drawBts.add(textBt);
 
-        icon = resizeIcon("src/icons/eraser.png", drawBtWidth, drawBtHeight);
+        icon = resizeIcon("eraser.png", drawBtWidth, drawBtHeight);
         eraserBt = new JButton(icon);
         eraserBt.setToolTipText("Eraser");
         this.drawBts.add(eraserBt);
@@ -545,22 +551,22 @@ public class Client extends UnicastRemoteObject implements IClient {
 
 
         // Configure function buttons for client manager
-        icon = resizeIcon("src/icons/new.png", funcBtWidth, funcBtHeight);
+        icon = resizeIcon("new.png", funcBtWidth, funcBtHeight);
         newBt = new JButton(icon);
         newBt.setToolTipText("New canvas");
         this.funcBts.add(newBt);
 
-        icon = resizeIcon("src/icons/open.png", funcBtWidth, funcBtHeight);
+        icon = resizeIcon("open.png", funcBtWidth, funcBtHeight);
         openBt = new JButton(icon);
         openBt.setToolTipText("Open a canvas");
         this.funcBts.add(openBt);
 
-        icon = resizeIcon("src/icons/save.png", funcBtWidth, funcBtHeight);
+        icon = resizeIcon("save.png", funcBtWidth, funcBtHeight);
         saveBt = new JButton(icon);
         saveBt.setToolTipText("Save the canvas");
         this.funcBts.add(saveBt);
 
-        icon = resizeIcon("src/icons/saveAs.png", funcBtWidth, funcBtHeight);
+        icon = resizeIcon("saveAs.png", funcBtWidth, funcBtHeight);
         saveAsBt = new JButton(icon);
         saveAsBt.setToolTipText("Save as a file");
         this.funcBts.add(saveAsBt);
@@ -653,7 +659,7 @@ public class Client extends UnicastRemoteObject implements IClient {
         chatMsg.setMinimumSize(new Dimension(50, 10));
         chatMsg.setBorder(border);
         // Button to send message
-        icon = resizeIcon("src/icons/send.png", drawBtWidth, drawBtHeight);
+        icon = resizeIcon("send.png", drawBtWidth, drawBtHeight);
         JButton sendBt = new JButton(icon);
         sendBt.addMouseListener(new MouseAdapter() {
             @Override
@@ -785,18 +791,15 @@ public class Client extends UnicastRemoteObject implements IClient {
             saveAsBt.setVisible(false);
         }
 
-        // Same button size
+        // Configure buttons' size
         layout.linkSize(SwingConstants.HORIZONTAL, newBt, openBt, saveBt, saveAsBt);
-
         layout.linkSize(SwingConstants.HORIZONTAL, freeBt, lineBt, circleBt, triangleBt, rectangleBt, textBt, eraserBt, colorUse, sendBt);
-
         layout.linkSize(SwingConstants.VERTICAL, freeBt, lineBt, circleBt, triangleBt, rectangleBt, textBt, eraserBt, colorUse, sendBt);
 
         // Configure the UI window
-        window.setMinimumSize(new Dimension(windowWidth, windowHeight));
-        window.setLocationRelativeTo(null);
-        window.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         window.setVisible(true);
+        window.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        window.setMinimumSize(new Dimension(windowWidth, windowHeight));
     }
 
 }

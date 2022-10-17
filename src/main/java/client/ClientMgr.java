@@ -4,19 +4,17 @@
 
 package client;
 
-import server.IBoardMgr;
-
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ClientMgr {
 
-    private Set<IClient> clientList;
+    private final Set<IClient> clientList;
 
-    public ClientMgr(IBoardMgr server) {
+    public ClientMgr() {
         // Allow concurrent access
-        this.clientList = Collections.newSetFromMap(new ConcurrentHashMap<IClient, Boolean>());
+        this.clientList = Collections.newSetFromMap(new ConcurrentHashMap<>());
     }
 
     // Get list of clients

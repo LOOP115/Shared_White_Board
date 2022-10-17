@@ -9,7 +9,6 @@ import client.IClient;
 import client.ClientMgr;
 import canvas.ICanvasMsg;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.io.Serializable;
 import java.rmi.RemoteException;
@@ -23,7 +22,7 @@ public class BoardMgr extends UnicastRemoteObject implements IBoardMgr, Serializ
     private IClient clientManager;
 
     public BoardMgr() throws RemoteException {
-        manager = new ClientMgr(this);
+        manager = new ClientMgr();
     }
 
     @Override

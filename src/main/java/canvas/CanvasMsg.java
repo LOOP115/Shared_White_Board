@@ -1,5 +1,5 @@
 /**
- * Class for messages on the canvas
+ * Class for messages on the canvas.
  */
 
 package canvas;
