@@ -34,11 +34,15 @@ public class Canvas extends JComponent {
     private BufferedImage frame;
     private BufferedImage prevFrame;
 
+    // Constants for canvas UI
     public static final int canvasWidth = 900;
     public static final int canvasHeight = 800;
     public static final BasicStroke defaultStroke = new BasicStroke(2f);
     public static final BasicStroke thickStroke = new BasicStroke(50f);
     public static final Font defaultFont = new Font("Calibri",Font.PLAIN, 30);
+    public static final String paintStart = "paintStart";
+    public static final String painting = "painting";
+    public static final String paintEnd = "paintEnd";
 
     public Canvas(IBoardMgr boardMgr, String username, boolean isManager) {
         this.boardMgr = boardMgr;
@@ -52,7 +56,7 @@ public class Canvas extends JComponent {
                 start = event.getPoint();
                 saveCanvas();
                 try {
-                    ICanvasMsg msg = new CanvasMsg("start", drawType, color, start, text, username);
+                    ICanvasMsg msg = new CanvasMsg(paintStart, drawType, color, start, text, username);
                     boardMgr.broadcastMsg(msg);
                 } catch (RemoteException e) {
                     JOptionPane.showMessageDialog(null, "Unable to draw, server is shut down!");
@@ -88,7 +92,7 @@ public class Canvas extends JComponent {
                             shape = drawLine(start, end);
                             start = end;
                             try {
-                                ICanvasMsg msg = new CanvasMsg("drawing", drawType, color, end, text, username);
+                                ICanvasMsg msg = new CanvasMsg(painting, drawType, color, end, text, username);
                                 boardMgr.broadcastMsg(msg);
                             } catch (RemoteException e) {
                                 JOptionPane.showMessageDialog(null, "Unable to connect to server!");
@@ -106,7 +110,7 @@ public class Canvas extends JComponent {
                             g2.setPaint(Color.white);
                             g2.setStroke(thickStroke);
                             try {
-                                ICanvasMsg msg = new CanvasMsg("drawing", drawType, Color.white, end, text, username);
+                                ICanvasMsg msg = new CanvasMsg(painting, drawType, Color.white, end, text, username);
                                 boardMgr.broadcastMsg(msg);
                             } catch (RemoteException e) {
                                 JOptionPane.showMessageDialog(null, "Unable to connect to server!");
@@ -156,11 +160,10 @@ public class Canvas extends JComponent {
                     try {
                         ICanvasMsg msg;
                         if ("eraser".equals(drawType)) {
-                            msg = new CanvasMsg("end", drawType, Color.white, end, text, username);
+                            msg = new CanvasMsg(paintEnd, drawType, Color.white, end, text, username);
                         } else {
-                            msg = new CanvasMsg("end", drawType, color, end, text, username);
+                            msg = new CanvasMsg(paintEnd, drawType, color, end, text, username);
                         }
-
                         boardMgr.broadcastMsg(msg);
                     } catch (RemoteException e) {
                         JOptionPane.showMessageDialog(null, "Unable to connect to server!");

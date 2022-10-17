@@ -2,6 +2,10 @@
 
 ### [Specification](resources/proj2-spec.pdf)
 
+### [UML](resources/UML.png)
+
+### [Report](resources/report.pdf)
+
 
 
 ### Run the program
@@ -168,7 +172,11 @@ Shared whiteboards allow multiple users to draw simultaneously on a canvas. Ther
 
 * #### Report
 
-  * You should write a report that includes the system architecture, communication protocols and canvas formats, design diagrams (class and interaction), implementation details.
+  * You should write a report that includes:
+    * System architecture ✔
+    * Communication protocols & Canvas formats ✔
+    * Design diagrams (class and interaction) ✔
+    * Implementation details ✔
   * Don’t document anything you haven’t implemented in the report. This is misconduct and will result in severe penalties.
 
 * #### You need to submit the following via LMS:
@@ -181,6 +189,5 @@ Shared whiteboards allow multiple users to draw simultaneously on a canvas. Ther
 
   * You will showcase your system and discuss your design choices during the demos.
   * Date and venue will be announced closer to the submission date.
-
 
 

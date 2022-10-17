@@ -1,7 +1,7 @@
 /**
  * Class of client using the white board.
  * Icon images of buttons are stored in a directory => icons.
- * Since Jar files only recognise absolute paths, modify line 53 before build or run the project,
+ * Since Jar files only recognise absolute paths, modify #Line56 before build or run the project,
  * otherwise buttons will have errors.
  */
 
@@ -140,7 +140,7 @@ public class Client extends UnicastRemoteObject implements IClient {
             return;
         }
         Shape shape = null;
-        if (draw.getDrawState().equals("start")) {
+        if (draw.getDrawState().equals(Canvas.paintStart)) {
             this.points.put(draw.getUsername(), draw.getPoint());
             return;
         }
@@ -151,7 +151,7 @@ public class Client extends UnicastRemoteObject implements IClient {
 
         switch (draw.getDrawState()) {
             // Sync mouse motion when free-hand drawing or using eraser
-            case "drawing":
+            case Canvas.painting:
                 if (draw.getDrawType().equals("eraser")) {
                     canvas.getG2().setStroke(Canvas.thickStroke);
                 }
@@ -161,7 +161,7 @@ public class Client extends UnicastRemoteObject implements IClient {
                 canvas.repaint();
                 break;
             // Sync mouse release
-            case "end":
+            case Canvas.paintEnd:
                 if (draw.getDrawType().equals("free") || draw.getDrawType().equals("line") || draw.getDrawType().equals("eraser")) {
                     shape = canvas.drawLine(start, draw.getPoint());
                 } else if (draw.getDrawType().equals("circle")) {
