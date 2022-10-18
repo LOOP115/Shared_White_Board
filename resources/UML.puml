@@ -157,6 +157,9 @@ class canvas.Canvas {
 + {static} BasicStroke defaultStroke
 + {static} BasicStroke thickStroke
 + {static} Font defaultFont
++ {static} String paintStart
++ {static} String painting
++ {static} String paintEnd
 + void paintComponent(Graphics)
 + Color getColor()
 + Graphics2D getG2()
@@ -176,7 +179,6 @@ class canvas.Canvas {
 + Shape drawCircle(Point,Point)
 + Shape drawTriangle(Point,Point)
 + Shape drawRectangle(Point,Point)
-+ Shape drawText(Point)
 + void black()
 + void white()
 + void gray()

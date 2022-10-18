@@ -39,12 +39,14 @@ public class User {
             // Client login
             if (!server.validUsername(username)) {
                 System.out.println("The name has been taken!\nPlease enter a new one.");
+                System.exit(0);
             }
             IClient client = new Client(server, username);
             try {
                 server.login(client);
             } catch(RemoteException e) {
                 System.err.println("Login error, unable to connect to server!");
+                System.exit(0);
             }
 
             // Judge client's access
@@ -61,6 +63,7 @@ public class User {
 
         } catch(Exception e) {
             System.err.println("Connection error!");
+            System.exit(0);
         }
     }
 

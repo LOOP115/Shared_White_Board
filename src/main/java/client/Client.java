@@ -276,9 +276,9 @@ public class Client extends UnicastRemoteObject implements IClient {
         FileDialog dialog = new FileDialog(window, "Save canvas", FileDialog.SAVE);
         dialog.setVisible(true);
         if (dialog.getFile() != null) {
-            this.canvasName = dialog.getFile();
+            this.canvasName = dialog.getFile() + ".png";
             this.canvasPath = dialog.getDirectory();
-            ImageIO.write(canvas.getFrame(), "png", new File(canvasPath + canvasName + ".png"));
+            ImageIO.write(canvas.getFrame(), "png", new File(canvasPath + canvasName));
         }
     }
 
@@ -628,7 +628,8 @@ public class Client extends UnicastRemoteObject implements IClient {
                             System.exit(0);
                         }
                     } catch (IOException e) {
-                            System.err.println("IO error");
+                        System.err.println("IO error");
+                        System.exit(0);
                     }
                 } else {
                     try {
@@ -641,7 +642,8 @@ public class Client extends UnicastRemoteObject implements IClient {
                             System.exit(0);
                         }
                     } catch (RemoteException e) {
-                            JOptionPane.showMessageDialog(null, "Unable to connect to the server!");
+                        JOptionPane.showMessageDialog(null, "Unable to connect to the server!");
+                        System.exit(0);
                     }
                 }
             }

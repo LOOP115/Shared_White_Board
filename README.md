@@ -158,7 +158,7 @@ Shared whiteboards allow multiple users to draw simultaneously on a canvas. Ther
 
 * #### Phase 3
 
-  * Integrate the whiteboard with the user management skeleton ✔
+  * Integrate the whiteboard with the user management skeleton
   * What communication mechanism will be used?
     * Socket, RMI, or any other frameworks of your choice.
   * How to propagate the modification from one peer to other peers?
@@ -189,5 +189,4 @@ Shared whiteboards allow multiple users to draw simultaneously on a canvas. Ther
 
   * You will showcase your system and discuss your design choices during the demos.
   * Date and venue will be announced closer to the submission date.
-
 

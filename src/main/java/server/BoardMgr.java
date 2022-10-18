@@ -30,8 +30,8 @@ public class BoardMgr extends UnicastRemoteObject implements IBoardMgr, Serializ
         // The first client is the manager
         if (this.manager.hasNoClient()) {
             client.setAsManager();
-            this.clientManager = client;
             client.setName("(Host) " + client.getName());
+            this.clientManager = client;
             this.manager.addClient(client);
             syncClientList();
             try {
@@ -96,7 +96,7 @@ public class BoardMgr extends UnicastRemoteObject implements IBoardMgr, Serializ
             if (c.getName().equals(name)) {
                 this.manager.delClient(c);
                 syncClientList();
-                System.out.println(name + "has left");
+                System.out.println(name + " has left");
                 return;
             }
         }

@@ -68,7 +68,7 @@ public class Canvas extends JComponent {
             @Override
             public void mouseDragged(MouseEvent event) {
                 end = event.getPoint();
-                Shape shape;
+                Shape shape = null;
                 if (g2 != null) {
                     // Generate different shapes according to types of drawings
                     switch (drawType) {
@@ -102,7 +102,7 @@ public class Canvas extends JComponent {
                             renderFrame(prevFrame);
                             g2.setFont(defaultFont);
                             g2.drawString("Text", end.x, end.y);
-                            shape = drawText(start);
+                            // shape = drawText(start);
                             break;
                         case "eraser":
                             shape = drawLine(start, end);
@@ -119,7 +119,9 @@ public class Canvas extends JComponent {
                         default:
                             throw new IllegalStateException("Unexpected value: " + drawType);
                     }
-                    g2.draw(shape);
+                    if (!drawType.equals("text")) {
+                        g2.draw(shape);
+                    }
                     repaint();
                 }
             }
@@ -315,14 +317,6 @@ public class Canvas extends JComponent {
         int height = Math.abs(start.y - end.y);
         int x = Math.min(start.x, end.x);
         int y = Math.min(start.y, end.y);
-        return new Rectangle2D.Double(x, y, width, height);
-    }
-
-    public Shape drawText(Point start) {
-        int x = start.x;
-        int y = start.y;
-        int width = 120;
-        int height = 40;
         return new Rectangle2D.Double(x, y, width, height);
     }
 

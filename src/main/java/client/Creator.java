@@ -42,10 +42,12 @@ public class Creator {
                 server.login(client);
             } catch(RemoteException e) {
                 System.err.println("Login error, unable to connect to server!");
+                System.exit(0);
             }
             client.renderUI(server);
         } catch(Exception e) {
             System.err.println("Connection error!");
+            System.exit(0);
         }
     }
 

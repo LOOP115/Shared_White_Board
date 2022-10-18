@@ -29,6 +29,7 @@ public class Server {
             System.out.println("Server Running...");
         } catch (Exception e) {
             System.out.println("Error starting the server");
+            System.exit(0);
         }
     }
 
