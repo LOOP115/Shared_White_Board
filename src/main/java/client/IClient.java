@@ -16,10 +16,10 @@ import java.util.Set;
 public interface IClient extends Remote {
 
     // Get client's username
-    String getName() throws RemoteException;
+    String getUsername() throws RemoteException;
 
     // Change client's username
-    void setName(String s) throws RemoteException;
+    void setUsername(String s) throws RemoteException;
 
     // Set the client as manager
     void setAsManager() throws RemoteException;

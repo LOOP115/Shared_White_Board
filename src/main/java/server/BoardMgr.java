@@ -30,7 +30,7 @@ public class BoardMgr extends UnicastRemoteObject implements IBoardMgr, Serializ
         // The first client is the manager
         if (this.manager.hasNoClient()) {
             client.setAsManager();
-            client.setName("(Host) " + client.getName());
+            client.setUsername("(Host) " + client.getUsername());
             this.clientManager = client;
             this.manager.addClient(client);
             syncClientList();
@@ -45,7 +45,7 @@ public class BoardMgr extends UnicastRemoteObject implements IBoardMgr, Serializ
         // Other clients need to be approved by the manager to join in
         boolean access = true;
         try {
-            access = client.needAccess(client.getName());
+            access = client.needAccess(client.getUsername());
         } catch (Exception e) {
             System.out.println("Unable to get access to the canvas!");
         }
@@ -68,11 +68,11 @@ public class BoardMgr extends UnicastRemoteObject implements IBoardMgr, Serializ
     }
 
     @Override
-    public boolean validUsername(String username) throws RemoteException {
-        boolean res = true;
+    public boolean invalidUsername(String username) throws RemoteException {
+        boolean res = false;
         for (IClient c : getClients()) {
-            if (username.equals(c.getName()) || c.getName().equals("(Host) " + username)) {
-                res = false;
+            if (username.equals(c.getUsername()) || c.getUsername().equals("(Host) " + username)) {
+                return true;
             }
         }
         return res;
@@ -91,21 +91,21 @@ public class BoardMgr extends UnicastRemoteObject implements IBoardMgr, Serializ
     }
 
     @Override
-    public void quitClient(String name) throws RemoteException {
+    public void quitClient(String username) throws RemoteException {
         for (IClient c: this.manager.getClientList()) {
-            if (c.getName().equals(name)) {
+            if (c.getUsername().equals(username)) {
                 this.manager.delClient(c);
                 syncClientList();
-                System.out.println(name + " has left");
+                System.out.println(username + " has left");
                 return;
             }
         }
     }
 
     @Override
-    public void kickClient(String name) throws RemoteException {
+    public void kickClient(String username) throws RemoteException {
         for (IClient c: this.manager.getClientList()) {
-            if (c.getName().equals(name)) {
+            if (c.getUsername().equals(username)) {
                 try {
                     c.forceQuit();
                 } catch (IOException e) {
@@ -113,7 +113,7 @@ public class BoardMgr extends UnicastRemoteObject implements IBoardMgr, Serializ
                 }
                 this.manager.delClient(c);
                 syncClientList();
-                System.out.println(name + "has been kicked out");
+                System.out.println(username + "has been kicked out");
                 return;
             }
         }

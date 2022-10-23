@@ -10,23 +10,19 @@
 
 ### Run the program
 
-**[Artifacts](artifacts)**
-
 ```
 # Start the server first
-java -jar StartServer.jar <port>
-java -jar StartServer.jar 3200
+java -jar WhiteBoard.jar StartServer <port>
+java -jar WhiteBoard.jar StartServer 3200
 
 # The first user creates the white board and becomes the manager
-java -jar CreateWhiteBoard.jar <serverIP> <serverPort> <username>
-java -jar CreateWhiteBoard.jar 127.0.0.1 3200 Creator
+java -jar WhiteBoard.jar CreateWhiteBoard <serverIP> <serverPort> <username>
+java -jar WhiteBoard.jar CreateWhiteBoard 127.0.0.1 3200 Creator
 
 # Other users join the white board
-java -jar JoinWhiteBoard.jar <serverIP> <serverPort> <username>
-java -jar JoinWhiteBoard.jar 127.0.0.1 3200 User
+java -jar WhiteBoard.jar JoinWhiteBoard <serverIP> <serverPort> <username>
+java -jar WhiteBoard.jar JoinWhiteBoard 127.0.0.1 3200 User
 ```
-
-**Note: Need to specify the absolute path of directory storing icon images since jar files can only recognise absolute paths. Directory path can be modified in [Client.java#L56](src/main/java/client/Client.java#L56).**
 
 
 

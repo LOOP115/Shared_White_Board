@@ -1,43 +1,11 @@
 @startuml
-class server.BoardMgr {
-- ClientMgr manager
-- IClient clientManager
-+ void login(IClient)
-+ boolean validUsername(String)
-+ Set<IClient> getClients()
-+ void syncClientList()
-+ void quitClient(String)
-+ void kickClient(String)
-+ void removeAllClients()
-+ void broadcastMsg(ICanvasMsg)
-+ byte[] sendCurrentCanvas()
-+ void sendExistCanvas(byte[])
-+ void cleanCanvas()
-+ void broadcastChat(String)
-+ void syncChatHistory(IClient)
-}
 interface canvas.ICanvasMsg {
-~ String getDrawState()
-~ String getDrawType()
+~ String getPaintState()
+~ String getPaintType()
 ~ Color getColor()
 ~ Point getPoint()
 ~ String getText()
 ~ String getUsername()
-}
-class canvas.CanvasMsg {
-- {static} long serialVersionUID
-- String drawState
-- String drawType
-- Color color
-- Point point
-- String text
-- String username
-+ String getDrawState()
-+ String getDrawType()
-+ Color getColor()
-+ Point getPoint()
-+ String getText()
-+ String getUsername()
 }
 class client.User {
 + {static} void main(String[])
@@ -53,31 +21,21 @@ class client.Client {
 - String canvasName
 - String canvasPath
 - JFrame window
-- {static} int windowWidth
-- {static} int windowHeight
-- {static} String iconDirPath
-- Color bgColor
-- LineBorder border
-- LineBorder antiBorder
 - JButton blackBt
 - JButton greenBt
 - ArrayList<JButton> colorBts
 - JButton colorUse
 - JButton freeBt
 - ArrayList<JButton> drawBts
-- {static} int drawBtWidth
-- {static} int drawBtHeight
 - JButton newBt
 - ArrayList<JButton> funcBts
-- {static} int funcBtWidth
-- {static} int funcBtHeight
 - DefaultListModel<String> clientList
 - DefaultListModel<String> chatHistory
 - JTextField chatMsg
 - JScrollPane chatWindow
 ~ ActionListener actionListener
-+ String getName()
-+ void setName(String)
++ String getUsername()
++ void setUsername(String)
 + void setAsManager()
 + boolean needAccess(String)
 + boolean getAccess()
@@ -98,30 +56,12 @@ class client.Client {
 + ImageIcon resizeIcon(String,int,int)
 + void renderUI(IBoardMgr)
 }
-interface client.IClient {
-~ String getName()
-~ void setName(String)
-~ void setAsManager()
-~ boolean needAccess(String)
-~ boolean getAccess()
-~ void setAccess(boolean)
-~ void syncClientList(Set<IClient>)
-~ void syncCanvas(ICanvasMsg)
-~ void cleanCanvas()
-~ byte[] getCurrentCanvas()
-~ void overrideCanvas(byte[])
-~ void forceQuit()
-~ void syncChat(String)
-~ DefaultListModel<String> getChatHistory()
-~ void syncChatHistory(DefaultListModel<String>)
-~ void renderUI(IBoardMgr)
-}
 class server.Server {
 + {static} void main(String[])
 }
 interface server.IBoardMgr {
 ~ void login(IClient)
-~ boolean validUsername(String)
+~ boolean invalidUsername(String)
 ~ Set<IClient> getClients()
 ~ void syncClientList()
 ~ void quitClient(String)
@@ -141,25 +81,112 @@ class client.ClientMgr {
 + void delClient(IClient)
 + boolean hasNoClient()
 }
-class canvas.Canvas {
+class WhiteBoard {
++ {static} void main(String[])
+}
+class server.BoardMgr {
+- ClientMgr manager
+- IClient clientManager
++ void login(IClient)
++ boolean invalidUsername(String)
++ Set<IClient> getClients()
++ void syncClientList()
++ void quitClient(String)
++ void kickClient(String)
++ void removeAllClients()
++ void broadcastMsg(ICanvasMsg)
++ byte[] sendCurrentCanvas()
++ void sendExistCanvas(byte[])
++ void cleanCanvas()
++ void broadcastChat(String)
++ void syncChatHistory(IClient)
+}
+class canvas.CanvasMsg {
 - {static} long serialVersionUID
-- boolean isManager
-- String drawType
+- String drawState
+- String paintType
 - Color color
-- Point start
+- Point point
 - String text
-- IBoardMgr boardMgr
-- Graphics2D g2
-- BufferedImage frame
-- BufferedImage prevFrame
-+ {static} int canvasWidth
-+ {static} int canvasHeight
+- String username
++ String getPaintState()
++ String getPaintType()
++ Color getColor()
++ Point getPoint()
++ String getText()
++ String getUsername()
+}
+interface client.IClient {
+~ String getUsername()
+~ void setUsername(String)
+~ void setAsManager()
+~ boolean needAccess(String)
+~ boolean getAccess()
+~ void setAccess(boolean)
+~ void syncClientList(Set<IClient>)
+~ void syncCanvas(ICanvasMsg)
+~ void cleanCanvas()
+~ byte[] getCurrentCanvas()
+~ void overrideCanvas(byte[])
+~ void forceQuit()
+~ void syncChat(String)
+~ DefaultListModel<String> getChatHistory()
+~ void syncChatHistory(DefaultListModel<String>)
+~ void renderUI(IBoardMgr)
+}
+class canvas.Utils {
++ {static} String line
++ {static} String circle
++ {static} String triangle
++ {static} String rectangle
++ {static} String text
++ {static} String free
++ {static} String eraser
++ {static} Color silver
++ {static} Color maroon
++ {static} Color purple
++ {static} Color fuchsia
++ {static} Color green
++ {static} Color lime
++ {static} Color olive
++ {static} Color navy
++ {static} Color teal
++ {static} Color aqua
 + {static} BasicStroke defaultStroke
 + {static} BasicStroke thickStroke
 + {static} Font defaultFont
 + {static} String paintStart
 + {static} String painting
 + {static} String paintEnd
++ {static} Color bgColor
++ {static} LineBorder border
++ {static} LineBorder antiBorder
++ {static} int windowWidth
++ {static} int windowHeight
++ {static} int canvasWidth
++ {static} int canvasHeight
++ {static} int drawBtWidth
++ {static} int drawBtHeight
++ {static} int funcBtWidth
++ {static} int funcBtHeight
++ {static} int clientWindowWidth
++ {static} int clientWindowHeight
++ {static} int chatWindowWidth
++ {static} int chatWindowHeight
++ {static} int msgWindowWidth
++ {static} int msgWindowHeight
+}
+class canvas.Canvas {
+- {static} long serialVersionUID
+- boolean isManager
+- String paintType
+- Color color
+- Point start
+- String text
+- IBoardMgr boardMgr
+- Graphics2D g2
+- BufferedImage frame
+- BufferedImage savedFrame
 + void paintComponent(Graphics)
 + Color getColor()
 + Graphics2D getG2()
@@ -168,12 +195,12 @@ class canvas.Canvas {
 + void cleanCanvas()
 + void saveCanvas()
 + BufferedImage getCanvasImage()
-+ void free()
 + void line()
 + void circle()
 + void triangle()
 + void rectangle()
 + void text()
++ void free()
 + void eraser()
 + Shape drawLine(Point,Point)
 + Shape drawCircle(Point,Point)
@@ -201,15 +228,15 @@ class client.Creator {
 }
 
 
+java.rmi.Remote <|-- canvas.ICanvasMsg
+client.IClient <|.. client.Client
+java.rmi.server.UnicastRemoteObject <|-- client.Client
+java.rmi.Remote <|-- server.IBoardMgr
 server.IBoardMgr <|.. server.BoardMgr
 java.io.Serializable <|.. server.BoardMgr
 java.rmi.server.UnicastRemoteObject <|-- server.BoardMgr
-java.rmi.Remote <|-- canvas.ICanvasMsg
 canvas.ICanvasMsg <|.. canvas.CanvasMsg
 java.rmi.server.UnicastRemoteObject <|-- canvas.CanvasMsg
-client.IClient <|.. client.Client
-java.rmi.server.UnicastRemoteObject <|-- client.Client
 java.rmi.Remote <|-- client.IClient
-java.rmi.Remote <|-- server.IBoardMgr
 canvas.JComponent <|-- canvas.Canvas
 @enduml

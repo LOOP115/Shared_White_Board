@@ -19,7 +19,7 @@ public interface IBoardMgr extends Remote {
     void login(IClient client) throws RemoteException;
 
     // Check if the name is duplicated
-    boolean validUsername(String username) throws RemoteException;
+    boolean invalidUsername(String username) throws RemoteException;
 
     // Get list of clients
     Set<IClient> getClients() throws RemoteException;
@@ -28,10 +28,10 @@ public interface IBoardMgr extends Remote {
     void syncClientList() throws RemoteException;
 
     // Client quits the whiteboard
-    void quitClient(String name) throws RemoteException;
+    void quitClient(String username) throws RemoteException;
 
     // Manager kicks out a client
-    void kickClient(String name) throws RemoteException;
+    void kickClient(String username) throws RemoteException;
 
     // Remove all the clients
     void removeAllClients() throws IOException;

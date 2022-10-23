@@ -12,7 +12,7 @@ public class CanvasMsg extends UnicastRemoteObject implements ICanvasMsg {
 
     private static final long serialVersionUID = 1L;
     private final String drawState;
-    private final String drawType;
+    private final String paintType;
     private final Color color;
     private final Point point;
     private final String text;
@@ -20,7 +20,7 @@ public class CanvasMsg extends UnicastRemoteObject implements ICanvasMsg {
 
     public CanvasMsg(String state, String msgType, Color color, Point point, String text, String username) throws RemoteException {
         this.drawState = state;
-        this.drawType = msgType;
+        this.paintType = msgType;
         this.color = color;
         this.point = point;
         this.text = text;
@@ -28,13 +28,13 @@ public class CanvasMsg extends UnicastRemoteObject implements ICanvasMsg {
     }
 
     @Override
-    public String getDrawState() throws RemoteException {
+    public String getPaintState() throws RemoteException {
         return this.drawState;
     }
 
     @Override
-    public String getDrawType() throws RemoteException {
-        return this.drawType;
+    public String getPaintType() throws RemoteException {
+        return this.paintType;
     }
 
     @Override

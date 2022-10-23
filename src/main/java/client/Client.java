@@ -9,11 +9,11 @@ package client;
 
 import canvas.Canvas;
 import canvas.ICanvasMsg;
+import canvas.Utils;
 import server.IBoardMgr;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
-import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -24,6 +24,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
@@ -50,15 +52,6 @@ public class Client extends UnicastRemoteObject implements IClient {
 
     // UI window
     private JFrame window;
-    private static final int windowWidth = 1000;
-    private static final int windowHeight = 800;
-    // Absolute path of icons directory
-    private static final String iconDirPath = "C:\\Users\\cjhm0\\Desktop\\WhiteBoard\\src\\icons\\";
-
-    // Emphasize selections with borders
-    private final Color bgColor = new Color(238, 238, 238);
-    private final LineBorder border = new LineBorder(Color.BLACK, 2);
-    private final LineBorder antiBorder = new LineBorder(bgColor, 2);
 
     // Color buttons
     private JButton blackBt, whiteBt, grayBt, silverBt, maroonBt, redBt, purpleBt, fuchsiaBt;
@@ -69,14 +62,10 @@ public class Client extends UnicastRemoteObject implements IClient {
     // Draw buttons
     private JButton freeBt, lineBt, circleBt, triangleBt, rectangleBt, textBt, eraserBt;
     private final ArrayList<JButton> drawBts = new ArrayList<>();
-    private static final int drawBtWidth = 30;
-    private static final int drawBtHeight = 30;
 
     // Function buttons
     private JButton newBt, openBt, saveBt, saveAsBt;
     private final ArrayList<JButton> funcBts = new ArrayList<>();
-    private static final int funcBtWidth = 20;
-    private static final int funcBtHeight = 20;
 
     // Client list
     private final DefaultListModel<String> clientList = new DefaultListModel<>();
@@ -93,12 +82,12 @@ public class Client extends UnicastRemoteObject implements IClient {
     }
 
     @Override
-    public String getName() throws RemoteException {
+    public String getUsername() throws RemoteException {
         return this.username;
     }
 
     @Override
-    public void setName(String name) throws RemoteException {
+    public void setUsername(String name) throws RemoteException {
         this.username = name;
     }
 
@@ -129,7 +118,7 @@ public class Client extends UnicastRemoteObject implements IClient {
         this.clientList.removeAllElements();
         this.clientList.addElement("Online users");
         for (IClient c: clients) {
-            this.clientList.addElement(c.getName());
+            this.clientList.addElement(c.getUsername());
         }
     }
 
@@ -140,7 +129,7 @@ public class Client extends UnicastRemoteObject implements IClient {
             return;
         }
         Shape shape = null;
-        if (draw.getDrawState().equals(Canvas.paintStart)) {
+        if (draw.getPaintState().equals(Utils.paintStart)) {
             this.points.put(draw.getUsername(), draw.getPoint());
             return;
         }
@@ -149,11 +138,11 @@ public class Client extends UnicastRemoteObject implements IClient {
         Point start = this.points.get(draw.getUsername());
         this.canvas.getG2().setPaint(draw.getColor());
 
-        switch (draw.getDrawState()) {
+        switch (draw.getPaintState()) {
             // Sync mouse motion when free-hand drawing or using eraser
-            case Canvas.painting:
-                if (draw.getDrawType().equals("eraser")) {
-                    canvas.getG2().setStroke(Canvas.thickStroke);
+            case Utils.painting:
+                if (draw.getPaintType().equals(Utils.eraser)) {
+                    canvas.getG2().setStroke(Utils.thickStroke);
                 }
                 shape = canvas.drawLine(start, draw.getPoint());
                 points.put(draw.getUsername(), draw.getPoint());
@@ -161,21 +150,21 @@ public class Client extends UnicastRemoteObject implements IClient {
                 canvas.repaint();
                 break;
             // Sync mouse release
-            case Canvas.paintEnd:
-                if (draw.getDrawType().equals("free") || draw.getDrawType().equals("line") || draw.getDrawType().equals("eraser")) {
+            case Utils.paintEnd:
+                if (draw.getPaintType().equals(Utils.free) || draw.getPaintType().equals(Utils.line) || draw.getPaintType().equals(Utils.eraser)) {
                     shape = canvas.drawLine(start, draw.getPoint());
-                } else if (draw.getDrawType().equals("circle")) {
+                } else if (draw.getPaintType().equals(Utils.circle)) {
                     shape = canvas.drawCircle(start, draw.getPoint());
-                } else if (draw.getDrawType().equals("triangle")) {
+                } else if (draw.getPaintType().equals(Utils.triangle)) {
                     shape = canvas.drawTriangle(start, draw.getPoint());
-                } else if (draw.getDrawType().equals("rectangle")) {
+                } else if (draw.getPaintType().equals(Utils.rectangle)) {
                     shape = canvas.drawRectangle(start, draw.getPoint());
-                } else if (draw.getDrawType().equals("text")) {
-                    canvas.getG2().setFont(Canvas.defaultFont);
+                } else if (draw.getPaintType().equals(Utils.text)) {
+                    canvas.getG2().setFont(Utils.defaultFont);
                     canvas.getG2().drawString(draw.getText(), draw.getPoint().x, draw.getPoint().y);
                 }
                 // Draw on the canvas if it is not a text input
-                if (!draw.getDrawType().equals("text")) {
+                if (!draw.getPaintType().equals(Utils.text)) {
                     try {
                         canvas.getG2().draw(shape);
                     } catch (NullPointerException e) {
@@ -186,7 +175,7 @@ public class Client extends UnicastRemoteObject implements IClient {
                 points.remove(draw.getUsername());
                 // Restore the original color and stroke
                 canvas.getG2().setPaint(orgColor);
-                canvas.getG2().setStroke(Canvas.defaultStroke);
+                canvas.getG2().setStroke(Utils.defaultStroke);
                 break;
         }
     }
@@ -287,17 +276,18 @@ public class Client extends UnicastRemoteObject implements IClient {
     public void selectButton(JButton buttonSelected, ArrayList<JButton> bts) {
         for (JButton bt: bts) {
             if (bt == buttonSelected) {
-                bt.setBorder(this.border);
+                bt.setBorder(Utils.border);
             } else {
-                bt.setBorder(this.antiBorder);
+                bt.setBorder(Utils.antiBorder);
             }
         }
     }
 
     // Resize the icon image
     public ImageIcon resizeIcon(String path, int width, int height) {
-        // ImageIcon icon = new ImageIcon(String.valueOf(Paths.get(path).toAbsolutePath()));
-        ImageIcon icon = new ImageIcon(iconDirPath + path);
+        Path currentRelativePath = Paths.get("");
+        String dir = currentRelativePath.toAbsolutePath().toString();
+        ImageIcon icon = new ImageIcon(dir + "/icons/" + path);
         Image iconImg = icon.getImage();
         Image resizeImg = iconImg.getScaledInstance(width, height, java.awt.Image.SCALE_SMOOTH);
         return new ImageIcon(resizeImg);
@@ -448,11 +438,11 @@ public class Client extends UnicastRemoteObject implements IClient {
         this.colorBts.add(grayBt);
 
         silverBt = new JButton();
-        silverBt.setBackground(new Color(75, 75, 75));
+        silverBt.setBackground(Utils.silver);
         this.colorBts.add(silverBt);
 
         maroonBt = new JButton();
-        maroonBt.setBackground(new Color(50, 0, 0));
+        maroonBt.setBackground(Utils.maroon);
         this.colorBts.add(maroonBt);
 
         redBt = new JButton();
@@ -460,23 +450,23 @@ public class Client extends UnicastRemoteObject implements IClient {
         this.colorBts.add(redBt);
 
         purpleBt = new JButton();
-        purpleBt.setBackground(new Color(128, 0, 128));
+        purpleBt.setBackground(Utils.purple);
         this.colorBts.add(purpleBt);
 
         fuchsiaBt = new JButton();
-        fuchsiaBt.setBackground(new Color(255, 0, 255));
+        fuchsiaBt.setBackground(Utils.fuchsia);
         this.colorBts.add(fuchsiaBt);
 
         greenBt = new JButton();
-        greenBt.setBackground(new Color(0, 128, 0));
+        greenBt.setBackground(Utils.green);
         this.colorBts.add(greenBt);
 
         limeBt = new JButton();
-        limeBt.setBackground(new Color(0, 255, 0));
+        limeBt.setBackground(Utils.lime);
         this.colorBts.add(limeBt);
 
         oliveBt = new JButton();
-        oliveBt.setBackground(new Color(128, 128, 0));
+        oliveBt.setBackground(Utils.olive);
         this.colorBts.add(oliveBt);
 
         yellowBt = new JButton();
@@ -484,7 +474,7 @@ public class Client extends UnicastRemoteObject implements IClient {
         this.colorBts.add(yellowBt);
 
         navyBt = new JButton();
-        navyBt.setBackground(new Color(0, 0, 50));
+        navyBt.setBackground(Utils.navy);
         this.colorBts.add(navyBt);
 
         blueBt = new JButton();
@@ -492,11 +482,11 @@ public class Client extends UnicastRemoteObject implements IClient {
         this.colorBts.add(blueBt);
 
         tealBt = new JButton();
-        tealBt.setBackground(new Color(0, 50, 50));
+        tealBt.setBackground(Utils.teal);
         this.colorBts.add(tealBt);
 
         aquaBt = new JButton();
-        aquaBt.setBackground(new Color(0, 100, 100));
+        aquaBt.setBackground(Utils.aqua);
         this.colorBts.add(aquaBt);
 
         for (JButton bt: colorBts) {
@@ -509,64 +499,65 @@ public class Client extends UnicastRemoteObject implements IClient {
 
         // Configure drawing buttons
         ImageIcon icon;
-        icon = resizeIcon("free.png", drawBtWidth, drawBtHeight);
-        freeBt = new JButton(icon);
-        freeBt.setToolTipText("Free-hand");
-        this.drawBts.add(freeBt);
 
-        icon = resizeIcon("line.png", drawBtWidth, drawBtHeight);
+        icon = resizeIcon("line.png", Utils.drawBtWidth, Utils.drawBtHeight);
         lineBt = new JButton(icon);
         lineBt.setToolTipText("Line");
         this.drawBts.add(lineBt);
 
-        icon = resizeIcon("circle.png", drawBtWidth, drawBtHeight);
+        icon = resizeIcon("circle.png", Utils.drawBtWidth, Utils.drawBtHeight);
         circleBt = new JButton(icon);
         circleBt.setToolTipText("Circle");
         this.drawBts.add(circleBt);
 
-        icon = resizeIcon("triangle.png", drawBtWidth, drawBtHeight);
+        icon = resizeIcon("triangle.png", Utils.drawBtWidth, Utils.drawBtHeight);
         triangleBt = new JButton(icon);
         triangleBt.setToolTipText("Triangle");
         this.drawBts.add(triangleBt);
 
-        icon = resizeIcon("rectangle.png", drawBtWidth, drawBtHeight);
+        icon = resizeIcon("rectangle.png", Utils.drawBtWidth, Utils.drawBtHeight);
         rectangleBt = new JButton(icon);
         rectangleBt.setToolTipText("Rectangle");
         this.drawBts.add(rectangleBt);
 
-        icon = resizeIcon("text.png", drawBtWidth, drawBtHeight);
+        icon = resizeIcon("text.png", Utils.drawBtWidth, Utils.drawBtHeight);
         textBt = new JButton(icon);
         textBt.setToolTipText("Text");
         this.drawBts.add(textBt);
 
-        icon = resizeIcon("eraser.png", drawBtWidth, drawBtHeight);
+        icon = resizeIcon("free.png", Utils.drawBtWidth, Utils.drawBtHeight);
+        freeBt = new JButton(icon);
+        freeBt.setToolTipText("Free-hand");
+        this.drawBts.add(freeBt);
+
+        icon = resizeIcon("eraser.png", Utils.drawBtWidth, Utils.drawBtHeight);
         eraserBt = new JButton(icon);
         eraserBt.setToolTipText("Eraser");
         this.drawBts.add(eraserBt);
 
         for (JButton bt: drawBts) {
-            bt.setBorder(antiBorder);
             bt.addActionListener(actionListener);
         }
+        selectButton(freeBt, drawBts);
 
 
         // Configure function buttons for client manager
-        icon = resizeIcon("new.png", funcBtWidth, funcBtHeight);
+        icon = resizeIcon("new.png", Utils.funcBtWidth, Utils.funcBtHeight);
         newBt = new JButton(icon);
         newBt.setToolTipText("New canvas");
         this.funcBts.add(newBt);
 
-        icon = resizeIcon("open.png", funcBtWidth, funcBtHeight);
+        icon = resizeIcon("open.png", Utils.funcBtWidth, Utils.funcBtHeight);
         openBt = new JButton(icon);
         openBt.setToolTipText("Open a canvas");
         this.funcBts.add(openBt);
 
-        icon = resizeIcon("save.png", funcBtWidth, funcBtHeight);
+        icon = resizeIcon("save.png", Utils.funcBtWidth, Utils.funcBtHeight);
         saveBt = new JButton(icon);
         saveBt.setToolTipText("Save the canvas");
         this.funcBts.add(saveBt);
 
-        icon = resizeIcon("saveAs.png", funcBtWidth, funcBtHeight);
+        icon = resizeIcon("saveAs.png", Utils.funcBtWidth, Utils.funcBtHeight);
         saveAsBt = new JButton(icon);
         saveAsBt.setToolTipText("Save as a file");
         this.funcBts.add(saveAsBt);
@@ -579,8 +570,8 @@ public class Client extends UnicastRemoteObject implements IClient {
         // Show all online users
         JList<String> clientJList = new JList<>(this.clientList);
         JScrollPane clientWindow = new JScrollPane(clientJList);
-        clientWindow.setMinimumSize(new Dimension(50, 300));
-        clientWindow.setBorder(border);
+        clientWindow.setMinimumSize(new Dimension(Utils.clientWindowWidth, Utils.clientWindowHeight));
+        clientWindow.setBorder(Utils.border);
 
         // Manager can double-click on usernames to kick out users
         if (isManager) {
@@ -593,7 +584,7 @@ public class Client extends UnicastRemoteObject implements IClient {
                         int index = list.locationToIndex(event.getPoint());
                         String kickName = list.getModel().getElementAt(index);
                         try {
-                            if(!getName().equals(kickName)) {
+                            if(!getUsername().equals(kickName)) {
                                 if(JOptionPane.showConfirmDialog(window,
                                         "Are you sure you want to kick " + kickName + " out?",
                                         "Warning", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
@@ -654,14 +645,14 @@ public class Client extends UnicastRemoteObject implements IClient {
         JList<String> chat = new JList<>(chatHistory);
         // Display chat history
         chatWindow = new JScrollPane(chat);
-        chatWindow.setMinimumSize(new Dimension(50, 300));
-        chatWindow.setBorder(border);
+        chatWindow.setMinimumSize(new Dimension(Utils.chatWindowWidth, Utils.chatWindowHeight));
+        chatWindow.setBorder(Utils.border);
         // Type chat message here
         chatMsg = new JTextField();
-        chatMsg.setMinimumSize(new Dimension(50, 10));
-        chatMsg.setBorder(border);
+        chatMsg.setMinimumSize(new Dimension(Utils.msgWindowWidth, Utils.msgWindowHeight));
+        chatMsg.setBorder(Utils.border);
         // Button to send message
-        icon = resizeIcon("send.png", drawBtWidth, drawBtHeight);
+        icon = resizeIcon("send.png", Utils.drawBtWidth, Utils.drawBtHeight);
         JButton sendBt = new JButton(icon);
         sendBt.addMouseListener(new MouseAdapter() {
             @Override
@@ -690,7 +681,7 @@ public class Client extends UnicastRemoteObject implements IClient {
         container.setLayout(layout);
         layout.setAutoCreateGaps(true);
         layout.setAutoCreateContainerGaps(true);
-        canvas.setBorder(border);
+        canvas.setBorder(Utils.border);
 
         // Horizontal layout
         layout.setHorizontalGroup(layout.createSequentialGroup()
@@ -728,12 +719,12 @@ public class Client extends UnicastRemoteObject implements IClient {
                     .addComponent(aquaBt))
                 .addComponent(canvas)
                 .addGroup(layout.createSequentialGroup()
-                    .addComponent(freeBt)
                     .addComponent(lineBt)
                     .addComponent(circleBt)
                     .addComponent(triangleBt)
                     .addComponent(rectangleBt)
                     .addComponent(textBt)
+                    .addComponent(freeBt)
                     .addComponent(eraserBt)
                     .addComponent(colorUse))));
 
@@ -776,12 +767,12 @@ public class Client extends UnicastRemoteObject implements IClient {
                         .addComponent(canvas)
                         .addGroup(layout.createSequentialGroup()
                             .addGroup(layout.createParallelGroup(BASELINE)
-                                .addComponent(freeBt)
                                 .addComponent(lineBt)
                                 .addComponent(circleBt)
                                 .addComponent(triangleBt)
                                 .addComponent(rectangleBt)
                                 .addComponent(textBt)
+                                .addComponent(freeBt)
                                 .addComponent(eraserBt)
                                 .addComponent(colorUse))))));
 
@@ -801,7 +792,7 @@ public class Client extends UnicastRemoteObject implements IClient {
         // Configure the UI window
         window.setVisible(true);
         window.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        window.setMinimumSize(new Dimension(windowWidth, windowHeight));
+        window.setMinimumSize(new Dimension(Utils.windowWidth, Utils.windowHeight));
     }
 
 }

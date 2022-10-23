@@ -111,7 +111,7 @@ public class WhiteBoard {
                     IBoardMgr server = (IBoardMgr) Naming.lookup(serverAddress);
 
                     // Client login
-                    if (!server.validUsername(username)) {
+                    if (server.invalidUsername(username)) {
                         System.out.println("The name has been taken!\nPlease enter a new one.");
                         System.exit(0);
                     }
