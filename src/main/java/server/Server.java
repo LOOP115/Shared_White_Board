@@ -16,6 +16,8 @@ public class Server {
         if (args.length > 0) {
             if (args.length != 1) {
                 System.out.println("Invalid arguments");
+                System.out.println("Please only specify port for server to start");
+                System.exit(0);
             } else {
                 port = args[0];
             }

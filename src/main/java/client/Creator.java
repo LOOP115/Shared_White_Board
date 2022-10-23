@@ -24,6 +24,7 @@ public class Creator {
         if (args.length > 0) {
             if (args.length != 3) {
                 System.out.println("Invalid arguments");
+                System.exit(0);
             } else {
                 serverIP = args[0];
                 serverPort = args[1];
