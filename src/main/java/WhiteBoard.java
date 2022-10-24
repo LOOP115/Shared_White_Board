@@ -82,7 +82,7 @@ public class WhiteBoard {
                         System.err.println("Login error, unable to connect to server!");
                         System.exit(0);
                     }
-                    client.renderUI(server);
+                    client.renderUI();
                 } catch(Exception e) {
                     System.err.println("Connection error!");
                     System.exit(0);
@@ -126,7 +126,7 @@ public class WhiteBoard {
                     // Judge client's access
                     if (client.getAccess()) {
                         // Render UI
-                        client.renderUI(server);
+                        client.renderUI();
                     } else {
                         server.quitClient(username);
                         JOptionPane.showMessageDialog(null,

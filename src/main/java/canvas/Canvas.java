@@ -11,6 +11,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionAdapter;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
@@ -21,9 +22,10 @@ import java.awt.image.WritableRaster;
 import java.io.ByteArrayInputStream;
 import java.rmi.RemoteException;
 
-public class Canvas extends JComponent {
+public class Canvas extends JPanel {
 
     private static final long serialVersionUID = 1L;
+    private final String username;
     private final boolean isManager;
     private String paintType = Utils.free;
     private Color color = Color.black;
@@ -34,155 +36,18 @@ public class Canvas extends JComponent {
     private BufferedImage frame;
     private BufferedImage savedFrame;
 
+
     public Canvas(IBoardMgr boardMgr, String username, boolean isManager) {
         this.boardMgr = boardMgr;
+        this.username = username;
         this.isManager = isManager;
 
         // Mouse pressed => start position
-        addMouseListener(new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent event) {
-                if (event.getButton() == MouseEvent.BUTTON1) {
-                    start = event.getPoint();
-                    saveCanvas();
-                    try {
-                        ICanvasMsg msg = new CanvasMsg(Utils.paintStart, paintType, color, start, text, username);
-                        boardMgr.broadcastMsg(msg);
-                    } catch (RemoteException e) {
-                        JOptionPane.showMessageDialog(null, "Unable to draw, server is shut down!");
-                    }
-                }
-            }
-        });
-
+        addMouseListener(startListener);
         // Monitor motion of the mouse
-        addMouseMotionListener(new MouseMotionAdapter() {
-            @Override
-            public void mouseDragged(MouseEvent event) {
-                if (SwingUtilities.isLeftMouseButton(event)) {
-                    end = event.getPoint();
-                    Shape shape = null;
-                    if (g2 != null) {
-                        // Generate different shapes according to types of drawings
-                        switch (paintType) {
-                            case Utils.line:
-                                renderFrame(savedFrame);
-                                shape = drawLine(start, end);
-                                break;
-                            case Utils.circle:
-                                renderFrame(savedFrame);
-                                shape = drawCircle(start, end);
-                                break;
-                            case Utils.triangle:
-                                renderFrame(savedFrame);
-                                shape = drawTriangle(start, end);
-                                break;
-                            case Utils.rectangle:
-                                renderFrame(savedFrame);
-                                shape = drawRectangle(start, end);
-                                break;
-                            case Utils.free:
-                                shape = drawLine(start, end);
-                                start = end;
-                                try {
-                                    ICanvasMsg msg = new CanvasMsg(Utils.painting, paintType, color, end, text, username);
-                                    boardMgr.broadcastMsg(msg);
-                                } catch (RemoteException e) {
-                                    JOptionPane.showMessageDialog(null, "Unable to connect to server!");
-                                }
-                                break;
-                            case Utils.text:
-                                renderFrame(savedFrame);
-                                g2.setFont(Utils.defaultFont);
-                                g2.drawString("Text", end.x, end.y);
-                                // shape = drawText(start);
-                                break;
-                            case Utils.eraser:
-                                shape = drawLine(start, end);
-                                start = end;
-                                g2.setPaint(Color.white);
-                                g2.setStroke(Utils.thickStroke);
-                                try {
-                                    ICanvasMsg msg = new CanvasMsg(Utils.painting, paintType, Color.white, end, text, username);
-                                    boardMgr.broadcastMsg(msg);
-                                } catch (RemoteException e) {
-                                    JOptionPane.showMessageDialog(null, "Unable to connect to server!");
-                                }
-                                break;
-                            default:
-                                throw new IllegalStateException("Unexpected value: " + paintType);
-                        }
-                        if (!paintType.equals(Utils.text)) {
-                            g2.draw(shape);
-                        }
-                        repaint();
-                    }
-                }
-            }
-        });
-
+        addMouseMotionListener(motionListener);
         // Mouse released => end position
-        addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseReleased(MouseEvent event) {
-                if (event.getButton() == MouseEvent.BUTTON1) {
-                    end = event.getPoint();
-                    Shape shape = null;
-                    if (g2 != null) {
-                        // Generate different shapes according to types of drawings
-                        switch (paintType) {
-                            case Utils.line:
-                            case Utils.free:
-                            case Utils.eraser:
-                                shape = drawLine(start, end);
-                                break;
-                            case Utils.circle:
-                                shape = drawCircle(start, end);
-                                break;
-                            case Utils.triangle:
-                                shape = drawTriangle(start, end);
-                                break;
-                            case Utils.rectangle:
-                                shape = drawRectangle(start, end);
-                                break;
-                            case Utils.text:
-                                // Ask for text input
-                                text = JOptionPane.showInputDialog("Type your text here");
-                                if (text == null) text = "";
-                                renderFrame(savedFrame);
-                                g2.setFont(Utils.defaultFont);
-                                g2.drawString(text, end.x, end.y);
-                                break;
-                        }
-                        // Broadcast changes to all clients
-                        try {
-                            ICanvasMsg msg;
-                            if (paintType.equals(Utils.eraser)) {
-                                msg = new CanvasMsg(Utils.paintEnd, paintType, Color.white, end, text, username);
-                            } else {
-                                msg = new CanvasMsg(Utils.paintEnd, paintType, color, end, text, username);
-                            }
-                            boardMgr.broadcastMsg(msg);
-                        } catch (RemoteException e) {
-                            JOptionPane.showMessageDialog(null, "Unable to connect to server!");
-                        }
-                        // Draw on the canvas if it is not a text input
-                        if (!paintType.equals(Utils.text)) {
-                            try {
-                                g2.draw(shape);
-                            } catch (NullPointerException e) {
-                                System.out.println("Drawing error!");
-                            }
-                        }
-                        repaint();
-                        // Restore the original color and stroke
-                        g2.setPaint(color);
-                        g2.setStroke(Utils.defaultStroke);
-                    }
-                }
-            }
-        });
-
+        addMouseListener(endListener);
     }
 
 
@@ -254,6 +119,149 @@ public class Canvas extends JComponent {
         saveCanvas();
         return savedFrame;
     }
+
+/***********************************************Mouse Listeners********************************************************/
+    private final MouseListener startListener = new MouseAdapter() {
+        @Override
+        public void mousePressed(MouseEvent event) {
+            if (event.getButton() == MouseEvent.BUTTON1) {
+                start = event.getPoint();
+                saveCanvas();
+                try {
+                    ICanvasMsg msg = new CanvasMsg(Utils.paintStart, paintType, color, start, text, username);
+                    boardMgr.broadcastMsg(msg);
+                } catch (RemoteException e) {
+                    JOptionPane.showMessageDialog(null, "Unable to draw, server is shut down!");
+                }
+            }
+        }
+    };
+
+    private final MouseMotionAdapter motionListener = new MouseMotionAdapter() {
+        @Override
+        public void mouseDragged(MouseEvent event) {
+            if (SwingUtilities.isLeftMouseButton(event)) {
+                end = event.getPoint();
+                Shape shape = null;
+                if (g2 != null) {
+                    // Generate different shapes according to types of drawings
+                    switch (paintType) {
+                        case Utils.line:
+                            renderFrame(savedFrame);
+                            shape = drawLine(start, end);
+                            break;
+                        case Utils.circle:
+                            renderFrame(savedFrame);
+                            shape = drawCircle(start, end);
+                            break;
+                        case Utils.triangle:
+                            renderFrame(savedFrame);
+                            shape = drawTriangle(start, end);
+                            break;
+                        case Utils.rectangle:
+                            renderFrame(savedFrame);
+                            shape = drawRectangle(start, end);
+                            break;
+                        case Utils.free:
+                            shape = drawLine(start, end);
+                            start = end;
+                            try {
+                                ICanvasMsg msg = new CanvasMsg(Utils.painting, paintType, color, end, text, username);
+                                boardMgr.broadcastMsg(msg);
+                            } catch (RemoteException e) {
+                                JOptionPane.showMessageDialog(null, "Unable to connect to server!");
+                            }
+                            break;
+                        case Utils.text:
+                            renderFrame(savedFrame);
+                            g2.setFont(Utils.defaultFont);
+                            g2.drawString("Text", end.x, end.y);
+                            // shape = drawText(start);
+                            break;
+                        case Utils.eraser:
+                            shape = drawLine(start, end);
+                            start = end;
+                            g2.setPaint(Color.white);
+                            g2.setStroke(Utils.thickStroke);
+                            try {
+                                ICanvasMsg msg = new CanvasMsg(Utils.painting, paintType, Color.white, end, text, username);
+                                boardMgr.broadcastMsg(msg);
+                            } catch (RemoteException e) {
+                                JOptionPane.showMessageDialog(null, "Unable to connect to server!");
+                            }
+                            break;
+                        default:
+                            throw new IllegalStateException("Unexpected value: " + paintType);
+                    }
+                    if (!paintType.equals(Utils.text)) {
+                        g2.draw(shape);
+                    }
+                    repaint();
+                }
+            }
+        }
+    };
+
+    private final MouseListener endListener = new MouseAdapter() {
+        @Override
+        public void mouseReleased(MouseEvent event) {
+            if (event.getButton() == MouseEvent.BUTTON1) {
+                end = event.getPoint();
+                Shape shape = null;
+                if (g2 != null) {
+                    // Generate different shapes according to types of drawings
+                    switch (paintType) {
+                        case Utils.line:
+                        case Utils.free:
+                        case Utils.eraser:
+                            shape = drawLine(start, end);
+                            break;
+                        case Utils.circle:
+                            shape = drawCircle(start, end);
+                            break;
+                        case Utils.triangle:
+                            shape = drawTriangle(start, end);
+                            break;
+                        case Utils.rectangle:
+                            shape = drawRectangle(start, end);
+                            break;
+                        case Utils.text:
+                            // Ask for text input
+                            text = JOptionPane.showInputDialog("Type your text here");
+                            if (text == null) text = "";
+                            renderFrame(savedFrame);
+                            g2.setFont(Utils.defaultFont);
+                            g2.drawString(text, end.x, end.y);
+                            break;
+                    }
+                    // Broadcast changes to all clients
+                    try {
+                        ICanvasMsg msg;
+                        if (paintType.equals(Utils.eraser)) {
+                            msg = new CanvasMsg(Utils.paintEnd, paintType, Color.white, end, text, username);
+                        } else {
+                            msg = new CanvasMsg(Utils.paintEnd, paintType, color, end, text, username);
+                        }
+                        boardMgr.broadcastMsg(msg);
+                    } catch (RemoteException e) {
+                        JOptionPane.showMessageDialog(null, "Unable to connect to server!");
+                    }
+                    // Draw on the canvas if it is not a text input
+                    if (!paintType.equals(Utils.text)) {
+                        try {
+                            g2.draw(shape);
+                        } catch (NullPointerException e) {
+                            System.out.println("Drawing error!");
+                        }
+                    }
+                    repaint();
+                    // Restore the original color and stroke
+                    g2.setPaint(color);
+                    g2.setStroke(Utils.defaultStroke);
+                }
+            }
+        }
+    };
 
 /**************************************************Types of Drawings***************************************************/
     public void line() {

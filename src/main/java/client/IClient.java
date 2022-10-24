@@ -5,7 +5,6 @@
 package client;
 
 import canvas.ICanvasMsg;
-import server.IBoardMgr;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -57,8 +56,13 @@ public interface IClient extends Remote {
     // Get current chat history
     DefaultListModel<String> getChatHistory() throws IOException;
 
+    // Sync chat history for newly joined clients
     void syncChatHistory(DefaultListModel<String> chatHistory) throws RemoteException;
 
-    // Render UI
-    void renderUI(IBoardMgr boardMgr) throws RemoteException;
+    // Configure buttons and windows
+    void configUI() throws RemoteException;
+
+    // Initialise and render the UI
+    void renderUI() throws RemoteException;
+
 }

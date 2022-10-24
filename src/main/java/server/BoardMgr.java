@@ -113,7 +113,7 @@ public class BoardMgr extends UnicastRemoteObject implements IBoardMgr, Serializ
                 }
                 this.manager.delClient(c);
                 syncClientList();
-                System.out.println(username + "has been kicked out");
+                System.out.println(username + " has been kicked out");
                 return;
             }
         }

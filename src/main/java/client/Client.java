@@ -15,17 +15,12 @@ import server.IBoardMgr;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
@@ -51,7 +46,7 @@ public class Client extends UnicastRemoteObject implements IClient {
     private String canvasPath;
 
     // UI window
-    private JFrame window;
+    private final JFrame window = new JFrame("White Board");
 
     // Color buttons
     private JButton blackBt, whiteBt, grayBt, silverBt, maroonBt, redBt, purpleBt, fuchsiaBt;
@@ -69,11 +64,14 @@ public class Client extends UnicastRemoteObject implements IClient {
 
     // Client list
     private final DefaultListModel<String> clientList = new DefaultListModel<>();
+    private final JList<String> clientJList = new JList<>(this.clientList);
+    private final JScrollPane clientWindow = new JScrollPane(clientJList);
 
     // Chat window
     private final DefaultListModel<String> chatHistory = new DefaultListModel<>();
     private JTextField chatMsg;
     private JScrollPane chatWindow;
+    private JButton sendBt;
 
     public Client(IBoardMgr server, String username) throws RemoteException {
         this.server = server;
@@ -235,193 +233,8 @@ public class Client extends UnicastRemoteObject implements IClient {
         }
     }
 
-
-    // Client manager has access to open, save and saveAs
-    public void mgrOpen() throws IOException {
-        FileDialog dialog = new FileDialog(this.window, "Open a canvas", FileDialog.LOAD);
-        dialog.setVisible(true);
-        if (dialog.getFile() != null) {
-            this.canvasName = dialog.getFile();
-            this.canvasPath = dialog.getDirectory();
-            BufferedImage image = ImageIO.read(new File(canvasPath + canvasName));
-            canvas.renderFrame(image);
-            ByteArrayOutputStream imageArray = new ByteArrayOutputStream();
-            ImageIO.write(image, "png", imageArray);
-            server.sendExistCanvas(imageArray.toByteArray());
-        }
-    }
-
-    private void mgrSave() throws IOException{
-        if(this.canvasName != null) {
-            ImageIO.write(canvas.getFrame(), "png", new File(canvasPath + canvasName));
-        }
-        else {
-            JOptionPane.showMessageDialog(null, "Please save it as a file first.",
-                    "Reminder", JOptionPane.INFORMATION_MESSAGE);
-        }
-    }
-
-    private void mgrSaveAs() throws IOException {
-        FileDialog dialog = new FileDialog(window, "Save canvas", FileDialog.SAVE);
-        dialog.setVisible(true);
-        if (dialog.getFile() != null) {
-            this.canvasName = dialog.getFile() + ".png";
-            this.canvasPath = dialog.getDirectory();
-            ImageIO.write(canvas.getFrame(), "png", new File(canvasPath + canvasName));
-        }
-    }
-
-
-    // Fill borders on selected button and move borders on the rest
-    public void selectButton(JButton buttonSelected, ArrayList<JButton> bts) {
-        for (JButton bt: bts) {
-            if (bt == buttonSelected) {
-                bt.setBorder(Utils.border);
-            } else {
-                bt.setBorder(Utils.antiBorder);
-            }
-        }
-    }
-
-    // Resize the icon image
-    public ImageIcon resizeIcon(String path, int width, int height) {
-        Path currentRelativePath = Paths.get("");
-        String dir = currentRelativePath.toAbsolutePath().toString();
-        ImageIcon icon = new ImageIcon(dir + "/icons/" + path);
-        Image iconImg = icon.getImage();
-        Image resizeImg = iconImg.getScaledInstance(width, height, java.awt.Image.SCALE_SMOOTH);
-        return new ImageIcon(resizeImg);
-    }
-
-
-    // Monitor client's mouse actions and make corresponding changes on UI
-    ActionListener actionListener = new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent event) {
-            // Select a color
-            if (event.getSource() == blackBt) {
-                canvas.black();
-                colorUse.setBackground(canvas.getColor());
-            } else if (event.getSource() == whiteBt) {
-                canvas.white();
-                colorUse.setBackground(canvas.getColor());
-            } else if (event.getSource() == grayBt) {
-                canvas.gray();
-                colorUse.setBackground(canvas.getColor());
-            } else if (event.getSource() == silverBt) {
-                canvas.silver();
-                colorUse.setBackground(canvas.getColor());
-            } else if (event.getSource() == maroonBt) {
-                canvas.maroon();
-                colorUse.setBackground(canvas.getColor());
-            } else if (event.getSource() == redBt) {
-                canvas.red();
-                colorUse.setBackground(canvas.getColor());
-            } else if (event.getSource() == purpleBt) {
-                canvas.purple();
-                colorUse.setBackground(canvas.getColor());
-            } else if (event.getSource() == fuchsiaBt) {
-                canvas.fuchsia();
-                colorUse.setBackground(canvas.getColor());
-            } else if (event.getSource() == greenBt) {
-                canvas.green();
-                colorUse.setBackground(canvas.getColor());
-            } else if (event.getSource() == limeBt) {
-                canvas.lime();
-                colorUse.setBackground(canvas.getColor());
-            } else if (event.getSource() == oliveBt) {
-                canvas.olive();
-                colorUse.setBackground(canvas.getColor());
-            } else if (event.getSource() == yellowBt) {
-                canvas.yellow();
-                colorUse.setBackground(canvas.getColor());
-            } else if (event.getSource() == navyBt) {
-                canvas.navy();
-                colorUse.setBackground(canvas.getColor());
-            } else if (event.getSource() == blueBt) {
-                canvas.blue();
-                colorUse.setBackground(canvas.getColor());
-            } else if (event.getSource() == tealBt) {
-                canvas.teal();
-                colorUse.setBackground(canvas.getColor());
-            } else if (event.getSource() == aquaBt) {
-                canvas.aqua();
-                colorUse.setBackground(canvas.getColor());
-            }
-            // Select a draw type
-            else if (event.getSource() == freeBt) {
-                canvas.free();
-                selectButton(freeBt, drawBts);
-            } else if (event.getSource() == lineBt) {
-                canvas.line();
-                selectButton(lineBt, drawBts);
-            } else if (event.getSource() == circleBt) {
-                canvas.circle();
-                selectButton(circleBt, drawBts);
-            } else if (event.getSource() == triangleBt) {
-                canvas.triangle();
-                selectButton(triangleBt, drawBts);
-            } else if (event.getSource() == rectangleBt) {
-                canvas.rectangle();
-                selectButton(rectangleBt, drawBts);
-            } else if (event.getSource() == textBt) {
-                canvas.text();
-                selectButton(textBt, drawBts);
-            } else if (event.getSource() == eraserBt) {
-                canvas.eraser();
-                selectButton(eraserBt, drawBts);
-            }
-            // Select a function button
-            else if (event.getSource() == newBt) {
-                if (isManager) {
-                    try {
-                        if (JOptionPane.showConfirmDialog(window,
-                                "Are you sure you want to create a new canvas?\nUnsaved changes will be discarded!",
-                                "Warning", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_NO_OPTION) {
-                            server.cleanCanvas();
-                        }
-                    } catch (RemoteException e) {
-                        System.out.println("Error with creating a new canvas!");
-                    }
-                }
-            } else if (event.getSource() == openBt) {
-                if (isManager) {
-                    try {
-                        if (JOptionPane.showConfirmDialog(window,
-                                "Are you sure you want to open another canvas?\nUnsaved changes will be discarded!",
-                                "Warning", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_NO_OPTION) {
-                            mgrOpen();
-                        }
-                    } catch (IOException e) {
-                        System.out.println("Error with opening a canvas!");
-                    }
-                }
-            } else if (event.getSource() == saveBt) {
-                if (isManager) {
-                    try {
-                        mgrSave();
-                    } catch (IOException e) {
-                        System.out.println("Error with saving the canvas!");
-                    }
-                }
-            } else if (event.getSource() == saveAsBt) {
-                if (isManager) {
-                    try {
-                        mgrSaveAs();
-                    } catch (IOException e) {
-                        System.out.println("Error with saving the canvas as a file!");
-                    }
-                }
-            }
-        }
-    };
-
-
-    // Initialise and render the UI
     @Override
-    public void renderUI(IBoardMgr server) throws RemoteException {
-        this.window = new JFrame("White Board");
-        Container container = this.window.getContentPane();
+    public void configUI() throws RemoteException {
         canvas = new Canvas(server, username, isManager);
 
         // Configure color buttons
@@ -492,154 +305,84 @@ public class Client extends UnicastRemoteObject implements IClient {
         for (JButton bt: colorBts) {
             bt.setBorderPainted(false);
             bt.setOpaque(true);
-            bt.addActionListener(actionListener);
+            bt.addActionListener(colorListener);
         }
         colorUse.setBackground(Color.black);
 
-
         // Configure drawing buttons
         ImageIcon icon;
-
-        icon = resizeIcon("line.png", Utils.drawBtWidth, Utils.drawBtHeight);
+        icon = Utils.resizeIcon("line.png", Utils.drawBtWidth, Utils.drawBtHeight);
         lineBt = new JButton(icon);
         lineBt.setToolTipText("Line");
         this.drawBts.add(lineBt);
 
-        icon = resizeIcon("circle.png", Utils.drawBtWidth, Utils.drawBtHeight);
+        icon = Utils.resizeIcon("circle.png", Utils.drawBtWidth, Utils.drawBtHeight);
         circleBt = new JButton(icon);
         circleBt.setToolTipText("Circle");
         this.drawBts.add(circleBt);
 
-        icon = resizeIcon("triangle.png", Utils.drawBtWidth, Utils.drawBtHeight);
+        icon = Utils.resizeIcon("triangle.png", Utils.drawBtWidth, Utils.drawBtHeight);
         triangleBt = new JButton(icon);
         triangleBt.setToolTipText("Triangle");
         this.drawBts.add(triangleBt);
 
-        icon = resizeIcon("rectangle.png", Utils.drawBtWidth, Utils.drawBtHeight);
+        icon = Utils.resizeIcon("rectangle.png", Utils.drawBtWidth, Utils.drawBtHeight);
         rectangleBt = new JButton(icon);
         rectangleBt.setToolTipText("Rectangle");
         this.drawBts.add(rectangleBt);
 
-        icon = resizeIcon("text.png", Utils.drawBtWidth, Utils.drawBtHeight);
+        icon = Utils.resizeIcon("text.png", Utils.drawBtWidth, Utils.drawBtHeight);
         textBt = new JButton(icon);
         textBt.setToolTipText("Text");
         this.drawBts.add(textBt);
 
-        icon = resizeIcon("free.png", Utils.drawBtWidth, Utils.drawBtHeight);
+        icon = Utils.resizeIcon("free.png", Utils.drawBtWidth, Utils.drawBtHeight);
         freeBt = new JButton(icon);
         freeBt.setToolTipText("Free-hand");
         this.drawBts.add(freeBt);
 
-        icon = resizeIcon("eraser.png", Utils.drawBtWidth, Utils.drawBtHeight);
+        icon = Utils.resizeIcon("eraser.png", Utils.drawBtWidth, Utils.drawBtHeight);
         eraserBt = new JButton(icon);
         eraserBt.setToolTipText("Eraser");
         this.drawBts.add(eraserBt);
 
         for (JButton bt: drawBts) {
-            bt.addActionListener(actionListener);
+            bt.addActionListener(paintListener);
         }
-        selectButton(freeBt, drawBts);
-
+        Utils.selectButton(freeBt, drawBts);
 
         // Configure function buttons for client manager
-        icon = resizeIcon("new.png", Utils.funcBtWidth, Utils.funcBtHeight);
+        icon = Utils.resizeIcon("new.png", Utils.funcBtWidth, Utils.funcBtHeight);
         newBt = new JButton(icon);
         newBt.setToolTipText("New canvas");
         this.funcBts.add(newBt);
 
-        icon = resizeIcon("open.png", Utils.funcBtWidth, Utils.funcBtHeight);
+        icon = Utils.resizeIcon("open.png", Utils.funcBtWidth, Utils.funcBtHeight);
         openBt = new JButton(icon);
         openBt.setToolTipText("Open a canvas");
         this.funcBts.add(openBt);
 
-        icon = resizeIcon("save.png", Utils.funcBtWidth, Utils.funcBtHeight);
+        icon = Utils.resizeIcon("save.png", Utils.funcBtWidth, Utils.funcBtHeight);
         saveBt = new JButton(icon);
         saveBt.setToolTipText("Save the canvas");
         this.funcBts.add(saveBt);
 
-        icon = resizeIcon("saveAs.png", Utils.funcBtWidth, Utils.funcBtHeight);
+        icon = Utils.resizeIcon("saveAs.png", Utils.funcBtWidth, Utils.funcBtHeight);
         saveAsBt = new JButton(icon);
         saveAsBt.setToolTipText("Save as a file");
         this.funcBts.add(saveAsBt);
 
         for (JButton bt: funcBts) {
-            bt.addActionListener(actionListener);
+            bt.addActionListener(funcListener);
         }
-
 
         // Show all online users
-        JList<String> clientJList = new JList<>(this.clientList);
-        JScrollPane clientWindow = new JScrollPane(clientJList);
         clientWindow.setMinimumSize(new Dimension(Utils.clientWindowWidth, Utils.clientWindowHeight));
         clientWindow.setBorder(Utils.border);
-
         // Manager can double-click on usernames to kick out users
-        if (isManager) {
-            clientJList.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent event) {
-                    @SuppressWarnings("unchecked")
-                    JList<String> list = (JList<String>)event.getSource();
-                    if (event.getClickCount() == 2) {
-                        int index = list.locationToIndex(event.getPoint());
-                        String kickName = list.getModel().getElementAt(index);
-                        try {
-                            if(!getUsername().equals(kickName)) {
-                                if(JOptionPane.showConfirmDialog(window,
-                                        "Are you sure you want to kick " + kickName + " out?",
-                                        "Warning", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-                                    try {
-                                        server.kickClient(kickName);
-                                        server.syncClientList();
-                                    } catch (IOException e) {
-                                        System.err.println("Unable to kick out " + kickName + "!");
-                                    }
-                                }
-                            }
-                        } catch (HeadlessException e) {
-                            System.err.println("Headless error.");
-                        } catch (RemoteException e) {
-                            System.err.println("Remote error");
-                        }
-                    }
-                }
-            });
-        }
-
+        if (isManager) clientJList.addMouseListener(kickListener);
         // All clients are forced to quit when the manager leaves
-        window.addWindowListener(new java.awt.event.WindowAdapter() {
-            @Override
-            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
-                if (isManager) {
-                    try {
-                        if (JOptionPane.showConfirmDialog(window,
-                                "Are you sure you want to end the session?\nAll participants will be removed.",
-                                "Warning", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
-                            server.removeAllClients();
-                            System.exit(0);
-                        }
-                    } catch (IOException e) {
-                        System.err.println("IO error");
-                        System.exit(0);
-                    }
-                } else {
-                    try {
-                        if (JOptionPane.showConfirmDialog(window,
-                                "Are you sure you want to leave the session?", "Warning",
-                                JOptionPane.YES_NO_OPTION,
-                                JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
-                            server.quitClient(username);
-                            server.syncClientList();
-                            System.exit(0);
-                        }
-                    } catch (RemoteException e) {
-                        JOptionPane.showMessageDialog(null, "Unable to connect to the server!");
-                        System.exit(0);
-                    }
-                }
-            }
-        });
-
+        window.addWindowListener(quitListener);
 
         // Configure chat window
         JList<String> chat = new JList<>(chatHistory);
@@ -652,31 +395,17 @@ public class Client extends UnicastRemoteObject implements IClient {
         chatMsg.setMinimumSize(new Dimension(Utils.msgWindowWidth, Utils.msgWindowHeight));
         chatMsg.setBorder(Utils.border);
         // Button to send message
-        icon = resizeIcon("send.png", Utils.drawBtWidth, Utils.drawBtHeight);
-        JButton sendBt = new JButton(icon);
-        sendBt.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent event) {
-                if(chatMsg.getText().equals("")) {
-                    JOptionPane.showMessageDialog(null, "Message cannot be empty.");
-                } else {
-                    try {
-                        server.broadcastChat(username + ": "+ chatMsg.getText());
-                        // Show the latest message
-                        SwingUtilities.invokeLater(() -> {
-                            JScrollBar vertical = chatWindow.getVerticalScrollBar();
-                            vertical.setValue(vertical.getMaximum());
-                        });
-                    } catch (RemoteException e) {
-                        JOptionPane.showMessageDialog(null, "Server is down, failed to send the message!");
-                    }
-                    chatMsg.setText("");
-                }
-            }
-        });
+        icon = Utils.resizeIcon("send.png", Utils.drawBtWidth, Utils.drawBtHeight);
+        sendBt = new JButton(icon);
+        sendBt.addMouseListener(sendChatListener);
+    }
 
-
-        // UI design
+    @Override
+    public void renderUI() throws RemoteException {
+        // Configure buttons and windows
+        configUI();
+        // UI settings
+        Container container = this.window.getContentPane();
         GroupLayout layout = new GroupLayout(container);
         container.setLayout(layout);
         layout.setAutoCreateGaps(true);
@@ -727,7 +456,6 @@ public class Client extends UnicastRemoteObject implements IClient {
                     .addComponent(freeBt)
                     .addComponent(eraserBt)
                     .addComponent(colorUse))));
-
 
         // Vertical layout
         layout.setVerticalGroup(layout.createSequentialGroup()
@@ -794,5 +522,250 @@ public class Client extends UnicastRemoteObject implements IClient {
         window.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         window.setMinimumSize(new Dimension(Utils.windowWidth, Utils.windowHeight));
     }
+
+/*********************************Client manager has access to open, save and saveAs***********************************/
+    private void mgrOpen() throws IOException {
+        FileDialog dialog = new FileDialog(this.window, "Open a canvas", FileDialog.LOAD);
+        dialog.setVisible(true);
+        if (dialog.getFile() != null) {
+            this.canvasName = dialog.getFile();
+            this.canvasPath = dialog.getDirectory();
+            BufferedImage image = ImageIO.read(new File(canvasPath + canvasName));
+            canvas.renderFrame(image);
+            ByteArrayOutputStream imageArray = new ByteArrayOutputStream();
+            ImageIO.write(image, "png", imageArray);
+            server.sendExistCanvas(imageArray.toByteArray());
+        }
+    }
+
+    private void mgrSave() throws IOException{
+        if(this.canvasName != null) {
+            ImageIO.write(canvas.getFrame(), "png", new File(canvasPath + canvasName));
+        }
+        else {
+            JOptionPane.showMessageDialog(null, "Please save it as a file first.",
+                    "Reminder", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+
+    private void mgrSaveAs() throws IOException {
+        FileDialog dialog = new FileDialog(window, "Save canvas", FileDialog.SAVE);
+        dialog.setVisible(true);
+        if (dialog.getFile() != null) {
+            this.canvasName = dialog.getFile() + ".png";
+            this.canvasPath = dialog.getDirectory();
+            ImageIO.write(canvas.getFrame(), "png", new File(canvasPath + canvasName));
+        }
+    }
+
+/*************************************************Action listeners*****************************************************/
+    // Monitor current using color
+    private final ActionListener colorListener = new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent event) {
+            JButton src = (JButton) event.getSource();
+            // Select a color
+            if (src == blackBt) {
+                canvas.black();
+            } else if (src == whiteBt) {
+                canvas.white();
+            } else if (src == grayBt) {
+                canvas.gray();
+            } else if (src == silverBt) {
+                canvas.silver();
+            } else if (src == maroonBt) {
+                canvas.maroon();
+            } else if (src == redBt) {
+                canvas.red();
+            } else if (src == purpleBt) {
+                canvas.purple();
+            } else if (src == fuchsiaBt) {
+                canvas.fuchsia();
+            } else if (src == greenBt) {
+                canvas.green();
+            } else if (src == limeBt) {
+                canvas.lime();
+            } else if (src == oliveBt) {
+                canvas.olive();
+            } else if (src == yellowBt) {
+                canvas.yellow();
+            } else if (src == navyBt) {
+                canvas.navy();
+            } else if (src == blueBt) {
+                canvas.blue();
+            } else if (src == tealBt) {
+                canvas.teal();
+            } else if (src == aquaBt) {
+                canvas.aqua();
+            }
+            if (src != null) {
+                colorUse.setBackground(canvas.getColor());
+            }
+        }
+    };
+
+    // Monitor current painting type
+    private final ActionListener paintListener = new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent event) {
+            JButton src = (JButton) event.getSource();
+            // Select a draw type
+            if (src == lineBt) {
+                canvas.line();
+            } else if (src == circleBt) {
+                canvas.circle();
+            } else if (src == triangleBt) {
+                canvas.triangle();
+            } else if (src == rectangleBt) {
+                canvas.rectangle();
+            } else if (src == textBt) {
+                canvas.text();
+            } else if (src == freeBt) {
+                canvas.free();
+            } else if (src == eraserBt) {
+                canvas.eraser();
+            }
+            if (src != null) {
+                Utils.selectButton(src, drawBts);
+            }
+        }
+    };
+
+    // Monitor functional buttons
+    private final ActionListener funcListener = new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent event) {
+            JButton src = (JButton) event.getSource();
+            // Select a function button
+            if (src == newBt) {
+                if (isManager) {
+                    try {
+                        if (JOptionPane.showConfirmDialog(window,
+                                "Are you sure you want to create a new canvas?\nUnsaved changes will be discarded!",
+                                "Warning", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_NO_OPTION) {
+                            server.cleanCanvas();
+                        }
+                    } catch (RemoteException e) {
+                        System.out.println("Error with creating a new canvas!");
+                    }
+                }
+            } else if (src == openBt) {
+                if (isManager) {
+                    try {
+                        if (JOptionPane.showConfirmDialog(window,
+                                "Are you sure you want to open another canvas?\nUnsaved changes will be discarded!",
+                                "Warning", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_NO_OPTION) {
+                            mgrOpen();
+                        }
+                    } catch (IOException e) {
+                        System.out.println("Error with opening a canvas!");
+                    }
+                }
+            } else if (src == saveBt) {
+                if (isManager) {
+                    try {
+                        mgrSave();
+                    } catch (IOException e) {
+                        System.out.println("Error with saving the canvas!");
+                    }
+                }
+            } else if (src == saveAsBt) {
+                if (isManager) {
+                    try {
+                        mgrSaveAs();
+                    } catch (IOException e) {
+                        System.out.println("Error with saving the canvas as a file!");
+                    }
+                }
+            }
+        }
+    };
+
+    // Monitor kicking - Double click to kick out clients
+    private final MouseListener kickListener = new MouseAdapter() {
+        @Override
+        public void mouseClicked(MouseEvent event) {
+            @SuppressWarnings("unchecked")
+            JList<String> src = (JList<String>) event.getSource();
+            if (event.getClickCount() == 2) {
+                int index = src.locationToIndex(event.getPoint());
+                String kickName = src.getModel().getElementAt(index);
+                try {
+                    if(!getUsername().equals(kickName)) {
+                        if(JOptionPane.showConfirmDialog(window,
+                                "Are you sure you want to kick " + kickName + " out?",
+                                "Warning", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+                            try {
+                                server.kickClient(kickName);
+                                server.syncClientList();
+                            } catch (IOException e) {
+                                System.err.println("Unable to kick out " + kickName + "!");
+                            }
+                        }
+                    }
+                } catch (HeadlessException e) {
+                    System.err.println("Headless error.");
+                } catch (RemoteException e) {
+                    System.err.println("Remote error");
+                }
+            }
+        }
+    };
+
+    // Monitor quit action
+    private final WindowListener quitListener = new WindowAdapter() {
+        @Override
+        public void windowClosing(WindowEvent event) {
+            if (isManager) {
+                try {
+                    if (JOptionPane.showConfirmDialog(window,
+                            "Are you sure you want to end the session?\nAll participants will be removed.",
+                            "Warning", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
+                        server.removeAllClients();
+                        System.exit(0);
+                    }
+                } catch (IOException e) {
+                    System.err.println("IO error");
+                    System.exit(0);
+                }
+            } else {
+                try {
+                    if (JOptionPane.showConfirmDialog(window,
+                            "Are you sure you want to leave the session?", "Warning",
+                            JOptionPane.YES_NO_OPTION,
+                            JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
+                        server.quitClient(username);
+                        server.syncClientList();
+                        System.exit(0);
+                    }
+                } catch (RemoteException e) {
+                    JOptionPane.showMessageDialog(null, "Unable to connect to the server!");
+                    System.exit(0);
+                }
+            }
+        }
+    };
+
+    // Monitor sending chat
+    private final MouseListener sendChatListener = new MouseAdapter() {
+        @Override
+        public void mouseClicked(MouseEvent event) {
+            if(chatMsg.getText().equals("")) {
+                JOptionPane.showMessageDialog(null, "Message cannot be empty.");
+            } else {
+                try {
+                    server.broadcastChat(username + ": "+ chatMsg.getText());
+                    // Show the latest message
+                    SwingUtilities.invokeLater(() -> {
+                        JScrollBar vertical = chatWindow.getVerticalScrollBar();
+                        vertical.setValue(vertical.getMaximum());
+                    });
+                } catch (RemoteException e) {
+                    JOptionPane.showMessageDialog(null, "Server is down, failed to send the message!");
+                }
+                chatMsg.setText("");
+            }
+        }
+    };
 
 }

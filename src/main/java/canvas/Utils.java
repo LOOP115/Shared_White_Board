@@ -4,8 +4,12 @@
 
 package canvas;
 
+import javax.swing.*;
 import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 
 public class Utils {
 
@@ -58,5 +62,27 @@ public class Utils {
     public static final int chatWindowHeight = 300;
     public static final int msgWindowWidth = 50;
     public static final int msgWindowHeight = 10;
+
+
+    // Fill borders on selected button and move borders on the rest
+    public static void selectButton(JButton buttonSelected, ArrayList<JButton> bts) {
+        for (JButton bt: bts) {
+            if (bt == buttonSelected) {
+                bt.setBorder(Utils.border);
+            } else {
+                bt.setBorder(Utils.antiBorder);
+            }
+        }
+    }
+
+    // Resize the icon image
+    public static ImageIcon resizeIcon(String path, int width, int height) {
+        Path currentRelativePath = Paths.get("");
+        String dir = currentRelativePath.toAbsolutePath().toString();
+        ImageIcon icon = new ImageIcon(dir + "/icons/" + path);
+        Image iconImg = icon.getImage();
+        Image resizeImg = iconImg.getScaledInstance(width, height, java.awt.Image.SCALE_SMOOTH);
+        return new ImageIcon(resizeImg);
+    }
 
 }

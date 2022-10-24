@@ -45,7 +45,7 @@ public class Creator {
                 System.err.println("Login error, unable to connect to server!");
                 System.exit(0);
             }
-            client.renderUI(server);
+            client.renderUI();
         } catch(Exception e) {
             System.err.println("Connection error!");
             System.exit(0);

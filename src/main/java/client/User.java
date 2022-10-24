@@ -53,7 +53,7 @@ public class User {
             // Judge client's access
             if (client.getAccess()) {
                 // Render UI
-                client.renderUI(server);
+                client.renderUI();
             } else {
                 server.quitClient(username);
                 JOptionPane.showMessageDialog(null,
