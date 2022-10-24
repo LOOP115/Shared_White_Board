@@ -42,7 +42,6 @@ public class Client extends UnicastRemoteObject implements IClient {
     private final ConcurrentHashMap<String, Point> points = new ConcurrentHashMap<>();
 
     // Save canvas
-    private String canvasName;
     private String canvasPath;
 
     // UI window
@@ -59,7 +58,7 @@ public class Client extends UnicastRemoteObject implements IClient {
     private final ArrayList<JButton> drawBts = new ArrayList<>();
 
     // Function buttons
-    private JButton newBt, openBt, saveBt, saveAsBt;
+    private JButton newBt, openBt, saveBt, saveAsBt, closeBt;
     private final ArrayList<JButton> funcBts = new ArrayList<>();
 
     // Client list
@@ -235,7 +234,9 @@ public class Client extends UnicastRemoteObject implements IClient {
 
     @Override
     public void configUI() throws RemoteException {
+        // Initialise the canvas
         canvas = new Canvas(server, username, isManager);
+        canvas.setMinimumSize(new Dimension(Utils.canvasWidth, Utils.canvasHeight));
 
         // Configure color buttons
         blackBt = new JButton();
@@ -372,6 +373,11 @@ public class Client extends UnicastRemoteObject implements IClient {
         saveAsBt.setToolTipText("Save as a file");
         this.funcBts.add(saveAsBt);
 
+        icon = Utils.resizeIcon("close.png", Utils.funcBtWidth, Utils.funcBtHeight);
+        closeBt = new JButton(icon);
+        closeBt.setToolTipText("Close the canvas");
+        this.funcBts.add(closeBt);
+
         for (JButton bt: funcBts) {
             bt.addActionListener(funcListener);
         }
@@ -420,7 +426,8 @@ public class Client extends UnicastRemoteObject implements IClient {
                     .addComponent(newBt)
                     .addComponent(openBt)
                     .addComponent(saveBt)
-                    .addComponent(saveAsBt))
+                    .addComponent(saveAsBt)
+                    .addComponent(closeBt))
                 .addComponent(clientWindow)
                 .addComponent(chatWindow)
                 .addGroup(layout.createParallelGroup(CENTER)
@@ -465,6 +472,7 @@ public class Client extends UnicastRemoteObject implements IClient {
                 .addComponent(openBt)
                 .addComponent(saveBt)
                 .addComponent(saveAsBt)
+                .addComponent(closeBt)
                 .addGroup(layout.createSequentialGroup()
                     .addGroup(layout.createParallelGroup(BASELINE)
                         .addComponent(blackBt)
@@ -510,10 +518,11 @@ public class Client extends UnicastRemoteObject implements IClient {
             openBt.setVisible(false);
             saveBt.setVisible(false);
             saveAsBt.setVisible(false);
+            closeBt.setVisible(false);
         }
 
         // Configure buttons' size
-        layout.linkSize(SwingConstants.HORIZONTAL, newBt, openBt, saveBt, saveAsBt);
+        layout.linkSize(SwingConstants.HORIZONTAL, newBt, openBt, saveBt, saveAsBt, closeBt);
         layout.linkSize(SwingConstants.HORIZONTAL, freeBt, lineBt, circleBt, triangleBt, rectangleBt, textBt, eraserBt, colorUse, sendBt);
         layout.linkSize(SwingConstants.VERTICAL, freeBt, lineBt, circleBt, triangleBt, rectangleBt, textBt, eraserBt, colorUse, sendBt);
 
@@ -523,38 +532,53 @@ public class Client extends UnicastRemoteObject implements IClient {
         window.setMinimumSize(new Dimension(Utils.windowWidth, Utils.windowHeight));
     }
 
-/*********************************Client manager has access to open, save and saveAs***********************************/
+/******************************Client manager has access to open, save, saveAs and close*******************************/
     private void mgrOpen() throws IOException {
         FileDialog dialog = new FileDialog(this.window, "Open a canvas", FileDialog.LOAD);
         dialog.setVisible(true);
         if (dialog.getFile() != null) {
-            this.canvasName = dialog.getFile();
-            this.canvasPath = dialog.getDirectory();
-            BufferedImage image = ImageIO.read(new File(canvasPath + canvasName));
-            canvas.renderFrame(image);
+            this.canvasPath = dialog.getDirectory() + dialog.getFile();
+            BufferedImage image = ImageIO.read(new File(canvasPath));
+            this.canvas.renderFrame(image);
             ByteArrayOutputStream imageArray = new ByteArrayOutputStream();
             ImageIO.write(image, "png", imageArray);
-            server.sendExistCanvas(imageArray.toByteArray());
+            this.server.sendExistCanvas(imageArray.toByteArray());
         }
     }
 
     private void mgrSave() throws IOException{
-        if(this.canvasName != null) {
-            ImageIO.write(canvas.getFrame(), "png", new File(canvasPath + canvasName));
+        if(this.canvasPath != null) {
+            ImageIO.write(canvas.getFrame(), "png", new File(canvasPath));
+            return;
         }
-        else {
-            JOptionPane.showMessageDialog(null, "Please save it as a file first.",
-                    "Reminder", JOptionPane.INFORMATION_MESSAGE);
-        }
+        JOptionPane.showMessageDialog(null, "Please save it as a file first.",
+                "Reminder", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void mgrSaveAs() throws IOException {
         FileDialog dialog = new FileDialog(window, "Save canvas", FileDialog.SAVE);
         dialog.setVisible(true);
         if (dialog.getFile() != null) {
-            this.canvasName = dialog.getFile() + ".png";
-            this.canvasPath = dialog.getDirectory();
-            ImageIO.write(canvas.getFrame(), "png", new File(canvasPath + canvasName));
+            this.canvasPath = dialog.getDirectory() + dialog.getFile() + ".png";
+            ImageIO.write(canvas.getFrame(), "png", new File(canvasPath ));
+        }
+    }
+
+    private void mgrClose() throws RemoteException {
+        if (this.canvasPath == null) {
+            JOptionPane.showMessageDialog(null, "Please open a file first.",
+                    "Reminder", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        try {
+            if (JOptionPane.showConfirmDialog(window,
+                    "Are you sure you want to close the canvas?\nUnsaved changes will be discarded!",
+                    "Warning", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_NO_OPTION) {
+                server.cleanCanvas();
+                this.canvasPath = null;
+            }
+        } catch (RemoteException e) {
+            System.out.println("Error with creating a new canvas!");
         }
     }
 
@@ -675,6 +699,14 @@ public class Client extends UnicastRemoteObject implements IClient {
                         mgrSaveAs();
                     } catch (IOException e) {
                         System.out.println("Error with saving the canvas as a file!");
+                    }
+                }
+            } else if (src == closeBt) {
+                if (isManager) {
+                    try {
+                        mgrClose();
+                    } catch (RemoteException e) {
+                        System.out.println("Error closing the canvas!");
                     }
                 }
             }

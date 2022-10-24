@@ -50,15 +50,15 @@ public class Utils {
     // UI settings
     public static final int windowWidth = 1000;
     public static final int windowHeight = 800;
-    public static final int canvasWidth = 900;
-    public static final int canvasHeight = 800;
+    public static final int canvasWidth = 660;
+    public static final int canvasHeight = 660;
     public static final int drawBtWidth = 30;
     public static final int drawBtHeight = 30;
     public static final int funcBtWidth = 20;
     public static final int funcBtHeight = 20;
-    public static final int clientWindowWidth = 50;
+    public static final int clientWindowWidth = 300;
     public static final int clientWindowHeight = 300;
-    public static final int chatWindowWidth = 50;
+    public static final int chatWindowWidth = 300;
     public static final int chatWindowHeight = 300;
     public static final int msgWindowWidth = 50;
     public static final int msgWindowHeight = 10;

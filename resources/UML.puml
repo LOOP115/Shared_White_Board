@@ -18,7 +18,6 @@ class client.Client {
 - Canvas canvas
 - IBoardMgr server
 - ConcurrentHashMap<String,Point> points
-- String canvasName
 - String canvasPath
 - JFrame window
 - JButton blackBt
@@ -62,6 +61,7 @@ class client.Client {
 - void mgrOpen()
 - void mgrSave()
 - void mgrSaveAs()
+- void mgrClose()
 }
 class server.Server {
 + {static} void main(String[])

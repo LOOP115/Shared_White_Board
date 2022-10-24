@@ -32,6 +32,7 @@
 * Open -> Open the saved image
 * Draw some stuffs and join a new client
   * ```java -jar WhiteBoard.jar CreateWhiteBoard 127.0.0.1 3200 Mingyang```
+* Close the file
 * Kick a client
 * Join a new client
 * One client quits
