@@ -48,6 +48,8 @@ public class Canvas extends JPanel {
         addMouseMotionListener(motionListener);
         // Mouse released => end position
         addMouseListener(endListener);
+
+        setDoubleBuffered(false);
     }
 
 

@@ -30,10 +30,18 @@ class client.Client {
 - JButton newBt
 - ArrayList<JButton> funcBts
 - DefaultListModel<String> clientList
+- JList<String> clientJList
+- JScrollPane clientWindow
 - DefaultListModel<String> chatHistory
 - JTextField chatMsg
 - JScrollPane chatWindow
-~ ActionListener actionListener
+- JButton sendBt
+- ActionListener colorListener
+- ActionListener paintListener
+- ActionListener funcListener
+- MouseListener kickListener
+- WindowListener quitListener
+- MouseListener sendChatListener
 + String getUsername()
 + void setUsername(String)
 + void setAsManager()
@@ -49,12 +57,11 @@ class client.Client {
 + void syncChat(String)
 + DefaultListModel<String> getChatHistory()
 + void syncChatHistory(DefaultListModel<String>)
-+ void mgrOpen()
++ void configUI()
++ void renderUI()
+- void mgrOpen()
 - void mgrSave()
 - void mgrSaveAs()
-+ void selectButton(JButton,ArrayList<JButton>)
-+ ImageIcon resizeIcon(String,int,int)
-+ void renderUI(IBoardMgr)
 }
 class server.Server {
 + {static} void main(String[])
@@ -132,7 +139,8 @@ interface client.IClient {
 ~ void syncChat(String)
 ~ DefaultListModel<String> getChatHistory()
 ~ void syncChatHistory(DefaultListModel<String>)
-~ void renderUI(IBoardMgr)
+~ void configUI()
+~ void renderUI()
 }
 class canvas.Utils {
 + {static} String line
@@ -175,9 +183,12 @@ class canvas.Utils {
 + {static} int chatWindowHeight
 + {static} int msgWindowWidth
 + {static} int msgWindowHeight
++ {static} void selectButton(JButton,ArrayList<JButton>)
++ {static} ImageIcon resizeIcon(String,int,int)
 }
 class canvas.Canvas {
 - {static} long serialVersionUID
+- String username
 - boolean isManager
 - String paintType
 - Color color
@@ -187,6 +198,9 @@ class canvas.Canvas {
 - Graphics2D g2
 - BufferedImage frame
 - BufferedImage savedFrame
+- MouseListener startListener
+- MouseMotionAdapter motionListener
+- MouseListener endListener
 + void paintComponent(Graphics)
 + Color getColor()
 + Graphics2D getG2()
@@ -238,5 +252,5 @@ java.rmi.server.UnicastRemoteObject <|-- server.BoardMgr
 canvas.ICanvasMsg <|.. canvas.CanvasMsg
 java.rmi.server.UnicastRemoteObject <|-- canvas.CanvasMsg
 java.rmi.Remote <|-- client.IClient
-canvas.JComponent <|-- canvas.Canvas
+canvas.JPanel <|-- canvas.Canvas
 @enduml
